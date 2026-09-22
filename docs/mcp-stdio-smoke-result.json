@@ -1,0 +1,72 @@
+{
+  "checks": [
+    {
+      "name": "stdio-tools-list",
+      "pass": true
+    },
+    {
+      "name": "real-host-status",
+      "pass": true
+    },
+    {
+      "name": "catalog-has-only-canonical-tools",
+      "pass": true
+    },
+    {
+      "name": "real-host-context",
+      "pass": true
+    },
+    {
+      "name": "stdio-search",
+      "pass": true
+    },
+    {
+      "name": "stdio-item",
+      "pass": true
+    },
+    {
+      "name": "stdio-fulltext",
+      "pass": true
+    },
+    {
+      "name": "native-fulltext-pagination-exact-reassembly",
+      "pass": true
+    },
+    {
+      "name": "native-fulltext-eof",
+      "pass": true
+    },
+    {
+      "name": "stdio-annotations",
+      "pass": true
+    },
+    {
+      "name": "stdio-image-content",
+      "pass": true
+    },
+    {
+      "name": "stdio-note-write-and-deduplication",
+      "pass": true
+    },
+    {
+      "name": "upstream-native-file-path",
+      "pass": true
+    },
+    {
+      "name": "actual-pdf-text-and-page-image",
+      "pass": true
+    },
+    {
+      "name": "upstream-native-update-item",
+      "pass": true
+    },
+    {
+      "name": "upstream-native-create-note",
+      "pass": true
+    },
+    {
+      "name": "native-note-to-live-edit-and-deduplication",
+      "pass": true
+    }
+  ]
+}

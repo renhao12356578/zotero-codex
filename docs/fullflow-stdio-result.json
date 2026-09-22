@@ -1,0 +1,89 @@
+{
+  "checks": [
+    {
+      "name": "stdio-tools-list",
+      "pass": true
+    },
+    {
+      "name": "real-host-status",
+      "pass": true
+    },
+    {
+      "name": "catalog-has-only-canonical-tools",
+      "pass": true
+    },
+    {
+      "name": "real-host-context",
+      "pass": true
+    },
+    {
+      "name": "stdio-search",
+      "pass": true
+    },
+    {
+      "name": "stdio-item",
+      "pass": true
+    },
+    {
+      "name": "stdio-fulltext",
+      "pass": true
+    },
+    {
+      "name": "native-fulltext-pagination-exact-reassembly",
+      "pass": true
+    },
+    {
+      "name": "native-fulltext-eof",
+      "pass": true
+    },
+    {
+      "name": "stdio-annotations",
+      "pass": true
+    },
+    {
+      "name": "stdio-image-content",
+      "pass": true
+    },
+    {
+      "name": "stdio-note-write-and-deduplication",
+      "pass": true
+    },
+    {
+      "name": "upstream-native-file-path",
+      "pass": true
+    },
+    {
+      "name": "actual-pdf-text-and-page-image",
+      "pass": true
+    },
+    {
+      "name": "upstream-native-update-item",
+      "pass": true
+    },
+    {
+      "name": "upstream-native-create-note",
+      "pass": true
+    },
+    {
+      "name": "native-note-to-live-edit-and-deduplication",
+      "pass": true
+    }
+  ],
+  "toolsCalled": [
+    "zotero_create_items",
+    "zotero_edit_note",
+    "zotero_get_annotations",
+    "zotero_get_attachment_path",
+    "zotero_get_context",
+    "zotero_get_item",
+    "zotero_get_item_fulltext",
+    "zotero_get_selection",
+    "zotero_read_note",
+    "zotero_read_pdf",
+    "zotero_resolve_item",
+    "zotero_search_items",
+    "zotero_status",
+    "zotero_update_item",
+    "zotero_write_note"
+  ]
+}

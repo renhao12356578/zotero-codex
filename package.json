@@ -1,0 +1,37 @@
+{
+  "name": "zotero-codex",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Zotero reading and Better Notes companion for Codex",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node mcp/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "build": "npm run build:native && python3 scripts/build.py",
+    "smoke": "node scripts/mcp-smoke.mjs",
+    "build:native": "tsc -p vendor/zotero-native-mcp/tsconfig.json",
+    "pretest": "npm run build:native",
+    "test:upstream": "npm --prefix vendor/zotero-native-mcp run test:unit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.27.1",
+    "@napi-rs/canvas": "1.0.9",
+    "pdfjs-dist": "6.3.289",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.15",
+    "typescript": "5.9.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renhao12356578/zotero-codex.git"
+  },
+  "homepage": "https://github.com/renhao12356578/zotero-codex#readme",
+  "bugs": {
+    "url": "https://github.com/renhao12356578/zotero-codex/issues"
+  }
+}

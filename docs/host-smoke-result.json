@@ -1,0 +1,106 @@
+{
+  "stage": "host",
+  "checks": [
+    {
+      "name": "plugin-started",
+      "pass": true
+    },
+    {
+      "name": "privileged-http-bridge",
+      "pass": true
+    },
+    {
+      "name": "better-notes-loaded",
+      "pass": true
+    },
+    {
+      "name": "better-notes-append",
+      "pass": true
+    },
+    {
+      "name": "library-section",
+      "pass": true
+    },
+    {
+      "name": "library-panel-controls",
+      "pass": true
+    },
+    {
+      "name": "note-editor",
+      "pass": true
+    },
+    {
+      "name": "live-note-context",
+      "pass": true
+    },
+    {
+      "name": "editor-insert",
+      "pass": true
+    },
+    {
+      "name": "better-notes-sidebar",
+      "pass": true
+    },
+    {
+      "name": "note-panel-controls",
+      "pass": true
+    },
+    {
+      "name": "annotation-drop-source",
+      "pass": true
+    },
+    {
+      "name": "reader-selection-button",
+      "pass": true
+    },
+    {
+      "name": "region-image-retained",
+      "pass": true
+    }
+  ],
+  "sections": [
+    {
+      "itemID": 1,
+      "note": false,
+      "hidden": false,
+      "tabType": "library",
+      "tag": "html:div"
+    },
+    {
+      "hidden": false,
+      "tag": "item-pane-custom-section"
+    },
+    {
+      "hidden": false,
+      "tag": "div"
+    },
+    {
+      "itemID": 2,
+      "note": true,
+      "hidden": false,
+      "tabType": "note",
+      "tag": "html:div"
+    },
+    {
+      "hidden": false,
+      "tag": "item-pane-custom-section"
+    },
+    {
+      "hidden": false,
+      "tag": "div"
+    }
+  ],
+  "panelCount": 2,
+  "views": [
+    {
+      "connected": true,
+      "bodyConnected": true,
+      "key": "1:5ZYYG3SI"
+    },
+    {
+      "connected": true,
+      "bodyConnected": true,
+      "key": "1:6FIMRZ8B"
+    }
+  ]
+}

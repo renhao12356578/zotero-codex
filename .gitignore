@@ -1,0 +1,21 @@
+dist/
+.runtime/
+node_modules/
+*.log
+.DS_Store
+
+# Local credentials and databases
+.env
+.env.*
+*.sqlite
+*.sqlite-*
+connection.json
+zotero-codex-mcp.json
+native-keys.json
+keys.json
+__pycache__/
+
+# Local research notes and environment-specific diagnostics
+docs/design-v1.md
+docs/existing-client-reference.md
+docs/fullflow-daily-status.json

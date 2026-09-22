@@ -1,0 +1,77 @@
+// End-to-end SDK -> stdio -> XPI. Writes only to a prepared isolated library.
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';
+import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js';
+import {readFile,writeFile,mkdtemp,rename,stat} from 'node:fs/promises';
+import {resolve,basename} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {randomUUID} from 'node:crypto';
+const base=resolve(process.argv[2]||'');
+if(!basename(base).startsWith('zotero-codex-host-'))throw new Error('Requires isolated fixture directory');
+const prefs=await readFile(base+'/profile/user.js','utf8');
+if(!prefs.includes(JSON.stringify(base+'/data')))throw new Error('Not an isolated profile');
+const fixtures=JSON.parse(await readFile(base+'/bn-fixtures.json','utf8'));
+const cfg=JSON.parse(await readFile(base+'/connection.json','utf8'));
+const client=new Client({name:'bn-stdio-smoke',version:'0.5.0'});
+const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../mcp/server.mjs',import.meta.url)),'--connection-file',base+'/connection.json'],env:{ZOTERO_LOCAL_BASE_URL:new URL(cfg.url).origin,ZOTERO_LOCAL_KEY_STORE:base+'/keys.json'},stderr:'pipe'});
+const result={version:'0.5.0',at:new Date().toISOString(),checks:[],toolsCalled:[]};
+const check=(name,pass)=>{result.checks.push({name,pass:Boolean(pass)});if(!pass)throw new Error(name);};
+const raw=async(name,args)=>{result.toolsCalled.push('zotero_'+name);return client.callTool({name:'zotero_'+name,arguments:args});};
+const call=async(name,args)=>{const r=await raw(name,args);if(r.isError)throw new Error(r.content[0].text);return JSON.parse(r.content[0].text);};
+try{
+ await client.connect(transport);
+ const tools=(await client.listTools()).tools;check('43-tools-with-unique-names',tools.length===43&&new Set(tools.map(t=>t.name)).size===43);
+ const note=fixtures.note;
+ let before=await call('read_note',{note,openEditor:true});
+ const switched=await call('set_note_mode',{note,revision:before.revision,requestID:randomUUID(),mode:'markdown'});
+ check('stdio-mode-switch',switched.snapshot.format==='markdown');
+ const args={note,revision:switched.snapshot.revision,requestID:randomUUID(),edits:[{operation:'insert',startLine:switched.snapshot.lineCount+1,newText:'\n## STDIO verification\n\nWritten via MCP.'}]};
+ const edit=await call('edit_note',args);check('stdio-markdown-patch',edit.snapshot.text.includes('Written via MCP.'));
+ check('stdio-retry-deduplication',(await call('edit_note',args)).replayed);
+ before=await call('read_note',{note});check('stdio-markdown-readback',before.text===edit.snapshot.text);
+ const conversion=await call('convert_note_content',{from:'markdown',content:'**test**'});check('stdio-conversion',conversion.content.includes('<strong>test</strong>'));
+
+ const source='# STDIO fullflow\n\n**Bold** from MCP.\n\nFinal paragraph.';
+ before=await call('read_note',{note});
+ const set={note,revision:before.revision,requestID:randomUUID(),markdown:source};
+ const updated=await call('set_note_markdown',set);
+ check('stdio-set-markdown-source',updated.snapshot.text===source&&updated.persistence==='autosave-scheduled');
+ check('stdio-set-markdown-retry',(await call('set_note_markdown',set)).replayed);
+ check('stdio-stale-revision-refused',(await raw('set_note_markdown',{...set,requestID:randomUUID(),markdown:'Wrong'})).isError);
+ check('stdio-stale-write-preserves-content',(await call('read_note',{note})).text===source);
+ before=await call('read_note',{note});
+ const rich=await call('set_note_mode',{note,revision:before.revision,requestID:randomUUID(),mode:'richtext'});
+ check('stdio-markdown-to-richtext',rich.snapshot.format==='richtext'&&rich.snapshot.text.includes('Bold from MCP.'));
+ const structure=await call('get_note_structure',{note});
+ check('stdio-saved-outline',structure.outline.some(n=>n.title==='STDIO fullflow')&&structure.lines.length>0);
+ for(const direction of ['inbound','outbound'])check('stdio-relations-'+direction,Array.isArray((await call('get_note_relations',{note,direction})).links));
+ const syncNote=fixtures.syncNote;
+ let sync=await call('get_note_sync',{note:syncNote});check('stdio-sync-status',sync.enabled===false&&typeof sync.syncRevision==='string');
+ const directory=await mkdtemp(base+'/stdio-notes-');
+ const enable={note:syncNote,syncRevision:sync.syncRevision,requestID:randomUUID(),action:'enable',directory};
+ let action=await call('sync_note',enable);
+ check('stdio-enable-file-sync',action.status.enabled&&action.status.fileExists&&!action.status.conflict);
+ check('stdio-enable-retry',(await call('sync_note',enable)).replayed);
+ const file=action.status.filePath;
+ const content=await readFile(file,'utf8');
+ const changed=content.replace('Note concurrent change.','STDIO imported change.');
+ check('stdio-file-fixture-has-source-text',changed!==content);
+ await writeFile(file,changed);
+ check('stdio-stale-sync-revision-refused',(await raw('sync_note',{note:syncNote,syncRevision:action.status.syncRevision,requestID:randomUUID(),action:'sync'})).isError);
+ sync=await call('get_note_sync',{note:syncNote});
+ check('stdio-detect-file-change',sync.fileChanged&&!sync.noteChanged&&!sync.conflict);
+ action=await call('sync_note',{note:syncNote,syncRevision:sync.syncRevision,requestID:randomUUID(),action:'sync'});
+ check('stdio-file-to-saved-zotero-note',!(action.status.fileChanged)&&(await call('read_note',{note:syncNote})).text.includes('STDIO imported change.'));
+ await rename(file,file+'.temporarily-moved');
+ sync=await call('get_note_sync',{note:syncNote});
+ check('stdio-missing-sync-file-refused',!sync.fileExists&&(await raw('sync_note',{note:syncNote,syncRevision:sync.syncRevision,requestID:randomUUID(),action:'sync'})).isError);
+ await rename(file+'.temporarily-moved',file);
+ sync=await call('get_note_sync',{note:syncNote});
+ action=await call('sync_note',{note:syncNote,syncRevision:sync.syncRevision,requestID:randomUUID(),action:'disable'});
+ check('stdio-disable-retains-markdown',!action.status.enabled&&(await stat(file)).isFile());
+ const retained=await readFile(file,'utf8');
+ sync=await call('get_note_sync',{note:syncNote});
+ check('stdio-enable-existing-file-refused',(await raw('sync_note',{note:syncNote,syncRevision:sync.syncRevision,requestID:randomUUID(),action:'enable',directory})).isError);
+ check('stdio-existing-file-unmodified',(await readFile(file,'utf8'))===retained&&!(await call('get_note_sync',{note:syncNote})).enabled);
+
+}catch(error){result.error=String(error);process.exitCode=1;}
+finally{result.toolsCalled=[...new Set(result.toolsCalled)].sort();await client.close();await writeFile(base+'/bn-stdio-result.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));}

@@ -1,0 +1,33 @@
+{
+  "version": "0.5.0",
+  "checks": [
+    {
+      "name": "43-tools-with-unique-names",
+      "pass": true
+    },
+    {
+      "name": "stdio-mode-switch",
+      "pass": true
+    },
+    {
+      "name": "stdio-markdown-patch",
+      "pass": true
+    },
+    {
+      "name": "stdio-retry-deduplication",
+      "pass": true
+    },
+    {
+      "name": "stdio-markdown-readback",
+      "pass": true
+    },
+    {
+      "name": "stdio-conversion",
+      "pass": true
+    },
+    {
+      "name": "stdio-sync-status",
+      "pass": true
+    }
+  ]
+}

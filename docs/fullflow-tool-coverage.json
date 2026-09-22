@@ -1,0 +1,180 @@
+{
+  "at": "2026-09-22T10:58:39.380Z",
+  "registered": 43,
+  "invoked": 43,
+  "missing": [],
+  "tools": [
+    {
+      "name": "zotero_add_items_to_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_attach_file",
+      "invoked": true
+    },
+    {
+      "name": "zotero_authorize",
+      "invoked": true
+    },
+    {
+      "name": "zotero_convert_note_content",
+      "invoked": true
+    },
+    {
+      "name": "zotero_create_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_create_items",
+      "invoked": true
+    },
+    {
+      "name": "zotero_delete_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_delete_items",
+      "invoked": true
+    },
+    {
+      "name": "zotero_edit_note",
+      "invoked": true
+    },
+    {
+      "name": "zotero_empty_trash",
+      "invoked": true
+    },
+    {
+      "name": "zotero_export_items",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_annotations",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_attachment_path",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_context",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_item",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_item_children",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_item_fulltext",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_item_type_fields",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_note_relations",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_note_structure",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_note_sync",
+      "invoked": true
+    },
+    {
+      "name": "zotero_get_selection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_list_collections",
+      "invoked": true
+    },
+    {
+      "name": "zotero_list_libraries",
+      "invoked": true
+    },
+    {
+      "name": "zotero_list_saved_searches",
+      "invoked": true
+    },
+    {
+      "name": "zotero_list_tags",
+      "invoked": true
+    },
+    {
+      "name": "zotero_list_trash",
+      "invoked": true
+    },
+    {
+      "name": "zotero_read_note",
+      "invoked": true
+    },
+    {
+      "name": "zotero_read_pdf",
+      "invoked": true
+    },
+    {
+      "name": "zotero_remove_items_from_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_resolve_item",
+      "invoked": true
+    },
+    {
+      "name": "zotero_restore_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_restore_items",
+      "invoked": true
+    },
+    {
+      "name": "zotero_run_saved_search",
+      "invoked": true
+    },
+    {
+      "name": "zotero_search_items",
+      "invoked": true
+    },
+    {
+      "name": "zotero_set_note_markdown",
+      "invoked": true
+    },
+    {
+      "name": "zotero_set_note_mode",
+      "invoked": true
+    },
+    {
+      "name": "zotero_status",
+      "invoked": true
+    },
+    {
+      "name": "zotero_sync_note",
+      "invoked": true
+    },
+    {
+      "name": "zotero_update_collection",
+      "invoked": true
+    },
+    {
+      "name": "zotero_update_item",
+      "invoked": true
+    },
+    {
+      "name": "zotero_write_note",
+      "invoked": true
+    }
+  ]
+}

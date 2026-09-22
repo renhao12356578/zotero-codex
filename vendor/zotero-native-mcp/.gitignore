@@ -1,0 +1,13 @@
+node_modules/
+build/
+*.log
+.DS_Store
+
+# Local agent tooling and skill-manager artifacts
+.claude/
+.agents/
+skills-lock.json
+
+# Local secrets, never committed
+.env
+.env.*

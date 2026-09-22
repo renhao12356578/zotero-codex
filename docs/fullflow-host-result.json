@@ -1,0 +1,85 @@
+{
+  "stage": "host-mcp",
+  "checks": [
+    {
+      "name": "plugin-started",
+      "pass": true
+    },
+    {
+      "name": "better-notes-loaded",
+      "pass": true
+    },
+    {
+      "name": "persisted-note-read",
+      "pass": true
+    },
+    {
+      "name": "persisted-note-write",
+      "pass": true
+    },
+    {
+      "name": "duplicate-write-deduplicated",
+      "pass": true
+    },
+    {
+      "name": "stale-revision-rejected",
+      "pass": true
+    },
+    {
+      "name": "live-editor-read",
+      "pass": true
+    },
+    {
+      "name": "live-editor-append",
+      "pass": true
+    },
+    {
+      "name": "live-cursor-insert",
+      "pass": true
+    },
+    {
+      "name": "direct-edit-preserves-bold-and-link",
+      "pass": true
+    },
+    {
+      "name": "edit-request-deduplication",
+      "pass": true
+    },
+    {
+      "name": "multi-edit-failure-is-atomic",
+      "pass": true
+    },
+    {
+      "name": "edit-rejects-unsaved-human-changes",
+      "pass": true
+    },
+    {
+      "name": "delete-matched-text",
+      "pass": true
+    },
+    {
+      "name": "reader-event-auto-snapshot",
+      "pass": true
+    },
+    {
+      "name": "selection-nearby-fulltext",
+      "pass": true
+    },
+    {
+      "name": "selection-isolated-between-readers",
+      "pass": true
+    },
+    {
+      "name": "region-image-retained",
+      "pass": true
+    },
+    {
+      "name": "saved-annotations-read",
+      "pass": true
+    },
+    {
+      "name": "mcp-sidebar-rendered",
+      "pass": true
+    }
+  ]
+}

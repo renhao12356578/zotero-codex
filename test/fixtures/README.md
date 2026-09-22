@@ -1,0 +1,1 @@
+`alice.pdf` is the existing `wonderland_short.pdf` test fixture from the Zotero source checkout (https://github.com/zotero/zotero/tree/10.0.2/test/tests/data). It contains Project Gutenberg's public-domain Alice in Wonderland text and embedded attribution. Used only for PDF page extraction/rendering tests; no user papers are included.

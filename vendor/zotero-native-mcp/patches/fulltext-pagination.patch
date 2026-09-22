@@ -1,0 +1,87 @@
+--- a/src/tools/items.ts
++++ b/src/tools/items.ts
+@@ -7,6 +7,7 @@
+  * rate limit.
+  */
+ 
++import { createHash } from 'node:crypto';
+ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+ import { z } from 'zod';
+ 
+@@ -642,7 +643,9 @@
+       'Return the indexed full text of an attachment. Passing a regular item key works too: its ' +
+       'attachments are searched and the first one with indexed text is used. Text comes from ' +
+       'Zotero\'s own index, so it is available only for attachments Zotero has indexed. Long ' +
+-      'documents can be truncated with maxCharacters.',
++      'documents are read in chunks: maxCharacters limits each response, not the whole document. ' +
++      'Continue with the returned attachmentKey, nextOffset and expectedRevision=revision. ' +
++      'Offsets/counts use UTF-16 code units, not PDF pages. Unicode surrogate pairs are never split.',
+     inputSchema: {
+       itemKey: objectKey.describe('Attachment key, or a parent item key to search its attachments.'),
+       maxCharacters: z
+@@ -651,7 +654,11 @@
+         .min(100)
+         .max(500_000)
+         .default(50_000)
+-        .describe('Truncate the returned text at this many characters.'),
++        .describe('Maximum UTF-16 code units per response (100-500000); continue with nextOffset for the rest.'),
++      offset: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0)
++        .describe('Start offset in UTF-16 code units. Use the returned nextOffset without computing it yourself.'),
++      expectedRevision: z.string().regex(/^[a-f0-9]{64}$/).optional()
++        .describe('Pass the previous response revision when continuing. Rejects changed text or attachment identity instead of mixing versions.'),
+       groupId: groupIdParam,
+     },
+     outputSchema: {
+@@ -659,11 +666,16 @@
+       content: z.string(),
+       truncated: z.boolean(),
+       totalCharacters: z.number(),
++      offset: z.number(),
++      returnedCharacters: z.number(),
++      nextOffset: z.number().nullable(),
++      hasMore: z.boolean(),
++      revision: z.string(),
+       indexedPages: z.number().nullable(),
+       totalPages: z.number().nullable(),
+     },
+     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+-    handler: async ({ itemKey, maxCharacters, groupId }) => {
++    handler: async ({ itemKey, maxCharacters, groupId, offset, expectedRevision }) => {
+       const prefix = libraryPrefix(libraryOf({ groupId }));
+ 
+       interface FullText {
+@@ -710,12 +722,32 @@
+       }
+ 
+       const content = text.content ?? '';
+-      const truncated = content.length > maxCharacters;
++      // Local extension: retain upstream lookup and metadata; paginate the actual
++      // full response before truncation so offsets beyond 500000 remain readable.
++      const revision = createHash('sha256').update(JSON.stringify([prefix, key, content])).digest('hex');
++      if (expectedRevision && expectedRevision !== revision) {
++        throw new ZoteroInputError('Full text or attachment changed since the previous chunk.',
++          'Restart at offset 0 and use the returned attachmentKey and revision for subsequent chunks.');
++      }
++      if (offset > content.length) throw new ZoteroInputError(`offset ${offset} exceeds text length ${content.length}.`);
++      const splitsPair = (at: number) => at > 0 && at < content.length
++        && content.charCodeAt(at - 1) >= 0xD800 && content.charCodeAt(at - 1) <= 0xDBFF
++        && content.charCodeAt(at) >= 0xDC00 && content.charCodeAt(at) <= 0xDFFF;
++      if (splitsPair(offset)) throw new ZoteroInputError('offset splits a Unicode surrogate pair. Use nextOffset from the previous response.');
++      let end = Math.min(content.length, offset + maxCharacters);
++      if (splitsPair(end)) end--;
++      const hasMore = end < content.length;
++      const truncated = offset > 0 || hasMore;
+       return ok({
+         attachmentKey: key,
+-        content: truncated ? content.slice(0, maxCharacters) : content,
++        content: content.slice(offset, end),
+         truncated,
+         totalCharacters: content.length,
++        offset,
++        returnedCharacters: end - offset,
++        nextOffset: hasMore ? end : null,
++        hasMore,
++        revision,
+         indexedPages: text.indexedPages ?? null,
+         totalPages: text.totalPages ?? null,
+       });

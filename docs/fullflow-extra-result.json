@@ -1,0 +1,181 @@
+{
+  "at": "2026-09-22T10:56:04.273Z",
+  "checks": [
+    {
+      "name": "authorize-isolated-key",
+      "pass": true
+    },
+    {
+      "name": "list-libraries",
+      "pass": true
+    },
+    {
+      "name": "item-type-fields",
+      "pass": true
+    },
+    {
+      "name": "create-collection",
+      "pass": true
+    },
+    {
+      "name": "get-collection",
+      "pass": true
+    },
+    {
+      "name": "nested-collection",
+      "pass": true
+    },
+    {
+      "name": "move-rename-collection",
+      "pass": true
+    },
+    {
+      "name": "add-collection-membership",
+      "pass": true
+    },
+    {
+      "name": "remove-membership-keeps-item",
+      "pass": true
+    },
+    {
+      "name": "trash-collection",
+      "pass": true
+    },
+    {
+      "name": "restore-collection",
+      "pass": true
+    },
+    {
+      "name": "item-children",
+      "pass": true
+    },
+    {
+      "name": "tag-list",
+      "pass": true
+    },
+    {
+      "name": "saved-search-list",
+      "pass": true
+    },
+    {
+      "name": "execute-saved-search",
+      "pass": true
+    },
+    {
+      "name": "citation-export",
+      "pass": true
+    },
+    {
+      "name": "attach-linked",
+      "pass": true
+    },
+    {
+      "name": "attachment-bytes-linked",
+      "pass": true
+    },
+    {
+      "name": "attach-imported",
+      "pass": true
+    },
+    {
+      "name": "attachment-bytes-imported",
+      "pass": true
+    },
+    {
+      "name": "trash-list",
+      "pass": true
+    },
+    {
+      "name": "restore-item",
+      "pass": true
+    },
+    {
+      "name": "empty-trash-count-guard",
+      "pass": true
+    },
+    {
+      "name": "count-guard-no-deletion",
+      "pass": true
+    },
+    {
+      "name": "empty-isolated-trash",
+      "pass": true
+    },
+    {
+      "name": "richtext-replace-lines",
+      "pass": true
+    },
+    {
+      "name": "richtext-insert-at-both-ends",
+      "pass": true
+    },
+    {
+      "name": "richtext-range-overflow-refused",
+      "pass": true
+    },
+    {
+      "name": "richtext-invalid-range-atomic",
+      "pass": true
+    },
+    {
+      "name": "richtext-delete-range",
+      "pass": true
+    },
+    {
+      "name": "richtext-delete-all-keeps-valid-paragraph",
+      "pass": true
+    },
+    {
+      "name": "richtext-edit-after-clear",
+      "pass": true
+    },
+    {
+      "name": "live-endpoint-rejects-invalid-token",
+      "pass": true
+    },
+    {
+      "name": "live-endpoint-rejects-browser-origin",
+      "pass": true
+    },
+    {
+      "name": "server-healthy-after-origin-rejection",
+      "pass": true
+    },
+    {
+      "name": "private-connection-file",
+      "pass": true
+    }
+  ],
+  "toolsCalled": [
+    "zotero_add_items_to_collection",
+    "zotero_attach_file",
+    "zotero_authorize",
+    "zotero_create_collection",
+    "zotero_create_items",
+    "zotero_delete_collection",
+    "zotero_delete_items",
+    "zotero_edit_note",
+    "zotero_empty_trash",
+    "zotero_export_items",
+    "zotero_get_attachment_path",
+    "zotero_get_collection",
+    "zotero_get_item",
+    "zotero_get_item_children",
+    "zotero_get_item_type_fields",
+    "zotero_list_collections",
+    "zotero_list_libraries",
+    "zotero_list_saved_searches",
+    "zotero_list_tags",
+    "zotero_list_trash",
+    "zotero_read_note",
+    "zotero_remove_items_from_collection",
+    "zotero_resolve_item",
+    "zotero_restore_collection",
+    "zotero_restore_items",
+    "zotero_run_saved_search",
+    "zotero_status",
+    "zotero_update_collection",
+    "zotero_update_item"
+  ],
+  "originRejection": "Zotero closed the connection before an HTTP response"
+}

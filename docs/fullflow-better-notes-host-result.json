@@ -1,0 +1,86 @@
+{
+  "version": "0.5.0",
+  "stage": "better-notes-api",
+  "checks": [
+    {
+      "name": "richtext-read",
+      "pass": true
+    },
+    {
+      "name": "switch-to-markdown",
+      "pass": true
+    },
+    {
+      "name": "set-source-readback",
+      "pass": true
+    },
+    {
+      "name": "set-source-dedup",
+      "pass": true
+    },
+    {
+      "name": "markdown-autosaves-to-note",
+      "pass": true
+    },
+    {
+      "name": "markdown-line-patch",
+      "pass": true
+    },
+    {
+      "name": "markdown-patch-replay",
+      "pass": true
+    },
+    {
+      "name": "unsaved-human-edit-conflict",
+      "pass": true
+    },
+    {
+      "name": "switch-back-richtext",
+      "pass": true
+    },
+    {
+      "name": "saved-outline",
+      "pass": true
+    },
+    {
+      "name": "html-to-markdown",
+      "pass": true
+    },
+    {
+      "name": "markdown-to-html",
+      "pass": true
+    },
+    {
+      "name": "relations-inbound",
+      "pass": true
+    },
+    {
+      "name": "relations-outbound",
+      "pass": true
+    },
+    {
+      "name": "enable-file-sync",
+      "pass": true
+    },
+    {
+      "name": "detect-md-change",
+      "pass": true
+    },
+    {
+      "name": "md-file-to-zotero",
+      "pass": true
+    },
+    {
+      "name": "zotero-to-md-file",
+      "pass": true
+    },
+    {
+      "name": "reject-two-sided-conflict",
+      "pass": true
+    },
+    {
+      "name": "disable-keeps-md-file",
+      "pass": true
+    }
+  ]
+}

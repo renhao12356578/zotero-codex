@@ -1,0 +1,95 @@
+// Only synthetic data in an isolated Zotero profile; never use a daily library.
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';
+import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js';
+import {readFile,writeFile,stat} from 'node:fs/promises';
+import {resolve,basename} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {randomUUID,createHash} from 'node:crypto';
+const base=resolve(process.argv[2]||'');
+if(!basename(base).startsWith('zotero-codex-host-'))throw new Error('Requires isolated profile');
+const prefs=await readFile(base+'/profile/user.js','utf8');
+if(!prefs.includes(JSON.stringify(base+'/data')))throw new Error('Invalid isolated data directory');
+const f=JSON.parse(await readFile(base+'/fixtures.json','utf8'));
+const cfg=JSON.parse(await readFile(base+'/connection.json','utf8'));
+const client=new Client({name:'fullflow-extra',version:'0.5.0'});
+const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../mcp/server.mjs',import.meta.url)),'--connection-file',base+'/connection.json'],env:{ZOTERO_LOCAL_BASE_URL:new URL(cfg.url).origin,ZOTERO_LOCAL_KEY_STORE:base+'/native-keys.json'},stderr:'pipe'});
+const report={at:new Date().toISOString(),checks:[],toolsCalled:[]};
+const check=(name,pass)=>{report.checks.push({name,pass:Boolean(pass)});if(!pass)throw new Error(name);};
+const raw=async(name,args={})=>{report.toolsCalled.push('zotero_'+name);return client.callTool({name:'zotero_'+name,arguments:args});};
+const call=async(name,args={})=>{const r=await raw(name,args);if(r.isError)throw new Error(name+': '+r.content[0].text);try{return r.structuredContent||JSON.parse(r.content[0].text);}catch{return r.content[0].text;}};
+try{
+ await client.connect(transport);
+ check('authorize-isolated-key',!(await raw('authorize')).isError);
+ check('list-libraries',JSON.stringify(await call('list_libraries')).includes('user'));
+ check('item-type-fields',JSON.stringify(await call('get_item_type_fields',{itemType:'journalArticle'})).includes('title'));
+ const created=await call('create_collection',{collections:[{name:'Fullflow collection'}]});
+ const collectionKey=created.created[0]?.key;check('create-collection',Boolean(collectionKey)&&!created.failures.length);
+ check('get-collection',(await call('get_collection',{collectionKey})).collection.name==='Fullflow collection');
+ const child=await call('create_collection',{collections:[{name:'Child',parentCollectionKey:collectionKey}]});
+ const childKey=child.created[0].key;
+ check('nested-collection',(await call('list_collections',{scope:'children',parentKey:collectionKey})).collections.some(c=>c.key===childKey));
+ await call('update_collection',{collectionKey:childKey,name:'Renamed child',parentCollectionKey:null});
+ check('move-rename-collection',(await call('list_collections',{scope:'top'})).collections.some(c=>c.key===childKey&&c.name==='Renamed child'));
+ await call('add_items_to_collection',{itemKeys:[f.paper.key],collectionKey});
+ check('add-collection-membership',(await call('get_item',{itemKey:f.paper.key})).item.collections.includes(collectionKey));
+ await call('remove_items_from_collection',{itemKeys:[f.paper.key],collectionKey});
+ check('remove-membership-keeps-item',!((await call('get_item',{itemKey:f.paper.key})).item.collections||[]).includes(collectionKey));
+ await call('delete_collection',{collectionKeys:[childKey]});
+ check('trash-collection',!(await call('list_collections')).collections.some(c=>c.key===childKey));
+ const restored=await call('restore_collection',{collectionKeys:[childKey]});
+ check('restore-collection',restored.restored.includes(childKey)&&(await call('get_collection',{collectionKey:childKey})).collection.name==='Renamed child');
+ check('item-children',(await call('get_item_children',{itemKey:f.paper.key})).children.some(i=>i.key===f.attachment.key));
+ await call('update_item',{itemKey:f.paper.key,fields:{tags:[{tag:'fullflow-tag'}]}});
+ check('tag-list',(await call('list_tags',{q:'fullflow-tag'})).tags.some(t=>t.tag==='fullflow-tag'));
+ check('saved-search-list',(await call('list_saved_searches')).searches.some(s=>s.key===f.searchKey));
+ check('execute-saved-search',(await call('run_saved_search',{searchKey:f.searchKey})).items.some(i=>i.key===f.paper.key));
+ const exported=await call('export_items',{itemKeys:[f.paper.key],format:'csljson'});
+ check('citation-export',JSON.stringify(exported).includes('MCP synthetic fixture'));
+ const sha=b=>createHash('sha256').update(b).digest('hex');
+ const source=await readFile(base+'/sample.pdf');
+ for(const mode of ['linked','imported']){
+  const attachment=await call('attach_file',{filePath:base+'/sample.pdf',parentItemKey:f.paper.key,mode,title:'Fullflow '+mode});
+  const key=attachment.attachmentKey||attachment.attachment?.key;
+  check('attach-'+mode,Boolean(key));
+  const path=(await call('get_attachment_path',{itemKey:key})).attachments[0].path;
+  check('attachment-bytes-'+mode,sha(await readFile(path))===sha(source)&&(mode==='linked'?path===base+'/sample.pdf':path.startsWith(base+'/data/')));
+ }
+ const disposable=await call('create_items',{items:[{itemType:'book',title:'Disposable fullflow fixture'}]});const key=disposable.created[0].key;
+ await call('delete_items',{itemKeys:[key]});
+ check('trash-list',(await call('list_trash')).items.some(i=>i.key===key));
+ await call('restore_items',{itemKeys:[key]});
+ check('restore-item',(await call('get_item',{itemKey:key})).item.title==='Disposable fullflow fixture');
+ await call('delete_items',{itemKeys:[key]});
+ const trash=await call('list_trash');
+ check('empty-trash-count-guard',(await raw('empty_trash',{expectedCount:trash.totalResults+1})).isError);
+ check('count-guard-no-deletion',(await call('list_trash')).items.some(i=>i.key===key));
+ // The only erased data is our disposable fixture, in a fresh isolated profile.
+ await call('empty_trash',{expectedCount:trash.totalResults});
+ check('empty-isolated-trash',(await call('list_trash')).totalResults===0);
+ const createdNote=await call('create_items',{items:[{itemType:'note',parentItem:f.paper.key,note:'<div data-schema-version="9"><p>Alpha</p><p>Beta</p><p>Gamma</p></div>'}]});
+ const note=(await call('resolve_item',{itemKey:createdNote.created[0].key})).item;
+ const ref={libraryID:note.libraryID,key:note.key};
+ let before=await call('read_note',{note:ref,openEditor:true});
+ const patch=async(edits)=>{const snapshot=await call('read_note',{note:ref});await call('edit_note',{note:ref,revision:snapshot.revision,requestID:randomUUID(),edits});return call('read_note',{note:ref});};
+ let after=await patch([{operation:'replace',startLine:2,endLine:2,newText:'New beta\nExtra beta'}]);
+ check('richtext-replace-lines',after.text==='Alpha\nNew beta\nExtra beta\nGamma'&&after.lineCount===4);
+ after=await patch([{operation:'insert',startLine:1,newText:'Start'},{operation:'insert',startLine:5,newText:'End'}]);
+ check('richtext-insert-at-both-ends',after.text==='Start\nAlpha\nNew beta\nExtra beta\nGamma\nEnd');
+ before=after;
+ check('richtext-range-overflow-refused',(await raw('edit_note',{note:ref,revision:before.revision,requestID:randomUUID(),edits:[{operation:'delete',startLine:2,endLine:99}]})).isError);
+ check('richtext-invalid-range-atomic',(await call('read_note',{note:ref})).text===before.text);
+ after=await patch([{operation:'delete',startLine:3,endLine:4}]);
+ check('richtext-delete-range',after.text==='Start\nAlpha\nGamma\nEnd');
+ after=await patch([{operation:'delete',startLine:1,endLine:4}]);
+ check('richtext-delete-all-keeps-valid-paragraph',after.text===''&&after.lineCount===1);
+ after=await patch([{operation:'insert',startLine:1,newText:'Restored'}]);
+ check('richtext-edit-after-clear',after.text.includes('Restored'));
+ const denied=await fetch(cfg.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer wrong'},body:JSON.stringify({name:'zotero_status',arguments:{}})});
+ check('live-endpoint-rejects-invalid-token',denied.status===403);
+ let originRejected=false;
+ try{const origin=await fetch(cfg.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+cfg.token,Origin:'https://example.org'},body:JSON.stringify({name:'zotero_status',arguments:{}})});originRejected=origin.status===403;}catch(error){if(error.cause?.code!=='UND_ERR_SOCKET')throw error;originRejected=true;report.originRejection='Zotero closed the connection before an HTTP response';}
+ check('live-endpoint-rejects-browser-origin',originRejected);
+ check('server-healthy-after-origin-rejection',(await call('status')).ready);
+ check('private-connection-file',((await stat(base+'/connection.json')).mode&0o077)===0);
+}catch(error){report.error=String(error);process.exitCode=1;}
+finally{report.toolsCalled=[...new Set(report.toolsCalled)].sort();await client.close();await writeFile(base+'/fullflow-extra-result.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));}

@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/dvdsosa/zotero-native-mcp",
+  "commit": "4bd9972e93e2336db99320c935d9ea2cbb1615a4",
+  "license": "MIT",
+  "retrieved": "2026-09-16",
+  "modifications": [
+    {
+      "file": "src/tools/items.ts",
+      "patch": "patches/fulltext-pagination.patch",
+      "reason": "Add offset pagination, continuation metadata, optional revision guard, and Unicode-safe chunk boundaries to the existing fulltext handler."
+    }
+  ],
+  "sourceSHA256": {
+    "src/client.ts": "5572f0007ae97e75f1200c5d40ff30b9a3256af31c9d951184c63dc5a9956971",
+    "src/config.ts": "4ec1c7c7d6b42974158f142ba280205342728d288ac0e3646a7b259749e0d0e2",
+    "src/errors.ts": "983b2e9ae51570b54bcd1c4e944db11df78b9ada29b5893238923483558d9126",
+    "src/format.ts": "310953e3f58ee55e223e15f8f6e408ea818ff9e24a9931c136f560ff48df5407",
+    "src/index.ts": "ad48051efd9a0711020a1b611a6e1587363973f3bc8b9f612d99a6d604218bc4",
+    "src/keystore.ts": "3cb53b10868c4b9fc6da9a46e60e1d2d17d483837842791db77c194daf1a2712",
+    "src/tools/attachments.ts": "220d9b0d04abc0c74d3d55a5e1df44311af96b2d32960dac08f86215b9236349",
+    "src/tools/collections.ts": "e86c2341e145c2efc770ef1aa16d81e1b1068a9f508a55c1b39056454d6cc4f8",
+    "src/tools/discovery.ts": "96c9d31b0ef2361133d1eed99b50b0baf20531332435d3411a687957c2359325",
+    "src/tools/items.ts": "12402e938aa51dbf9c35e75cb8bc83f438a73c84210d5dc718d644f37fce47c6",
+    "src/tools/shared.ts": "ac959a717df664b4b079eb751cd7dd5e7624988d816f9cb52a1a88f755f46276",
+    "src/tools/system.ts": "a84acb8bf74693719fab2e468689af3696dd85919fd0907f5ed460e83a6303cf",
+    "src/tools/versions.ts": "fd31fd476ac30413e3674f62db6c271bc34577ce497ed82e9bb66c225bb0a338"
+  },
+  "modifiedSourceSHA256": {
+    "src/tools/items.ts": "0051331aada2921928fc38bfff47d25608fc39e560edc8443b33848ec87191a9"
+  }
+}

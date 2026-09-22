@@ -1,0 +1,33 @@
+name: Tests and XPI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:upstream
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zotero-codex-xpi-${{ matrix.os }}
+          path: dist/*.xpi
+          if-no-files-found: error

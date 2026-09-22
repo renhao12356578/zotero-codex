@@ -1,0 +1,61 @@
+{
+  "name": "zotero-native-mcp",
+  "version": "1.0.1",
+  "description": "MCP server for Zotero 10+. Read and write your library entirely offline through Zotero's native local API. No plugin, no API key, no cloud.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "zotero-native-mcp": "build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "start": "node build/index.js",
+    "inspect": "npm run build && npx -y @modelcontextprotocol/inspector node build/index.js",
+    "test": "npm run build && node --test",
+    "test:unit": "npm run build && node --test test/format.test.mjs test/config.test.mjs test/keystore.test.mjs test/client.test.mjs test/validation.test.mjs",
+    "postbuild": "node -e \"try{require('fs').chmodSync('build/index.js',0o755)}catch{}\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "zotero",
+    "zotero-10",
+    "claude",
+    "claude-code",
+    "anthropic",
+    "reference-manager",
+    "bibliography",
+    "citations",
+    "bibtex",
+    "academic-research",
+    "local-first",
+    "offline"
+  ],
+  "homepage": "https://github.com/dvdsosa/zotero-native-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dvdsosa/zotero-native-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dvdsosa/zotero-native-mcp/issues"
+  },
+  "author": "David Sosa",
+  "mcpName": "io.github.dvdsosa/zotero-native-mcp"
+}

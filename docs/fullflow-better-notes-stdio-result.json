@@ -1,0 +1,117 @@
+{
+  "version": "0.5.0",
+  "at": "2026-09-22T10:58:11.286Z",
+  "checks": [
+    {
+      "name": "43-tools-with-unique-names",
+      "pass": true
+    },
+    {
+      "name": "stdio-mode-switch",
+      "pass": true
+    },
+    {
+      "name": "stdio-markdown-patch",
+      "pass": true
+    },
+    {
+      "name": "stdio-retry-deduplication",
+      "pass": true
+    },
+    {
+      "name": "stdio-markdown-readback",
+      "pass": true
+    },
+    {
+      "name": "stdio-conversion",
+      "pass": true
+    },
+    {
+      "name": "stdio-set-markdown-source",
+      "pass": true
+    },
+    {
+      "name": "stdio-set-markdown-retry",
+      "pass": true
+    },
+    {
+      "name": "stdio-stale-revision-refused",
+      "pass": true
+    },
+    {
+      "name": "stdio-stale-write-preserves-content",
+      "pass": true
+    },
+    {
+      "name": "stdio-markdown-to-richtext",
+      "pass": true
+    },
+    {
+      "name": "stdio-saved-outline",
+      "pass": true
+    },
+    {
+      "name": "stdio-relations-inbound",
+      "pass": true
+    },
+    {
+      "name": "stdio-relations-outbound",
+      "pass": true
+    },
+    {
+      "name": "stdio-sync-status",
+      "pass": true
+    },
+    {
+      "name": "stdio-enable-file-sync",
+      "pass": true
+    },
+    {
+      "name": "stdio-enable-retry",
+      "pass": true
+    },
+    {
+      "name": "stdio-file-fixture-has-source-text",
+      "pass": true
+    },
+    {
+      "name": "stdio-stale-sync-revision-refused",
+      "pass": true
+    },
+    {
+      "name": "stdio-detect-file-change",
+      "pass": true
+    },
+    {
+      "name": "stdio-file-to-saved-zotero-note",
+      "pass": true
+    },
+    {
+      "name": "stdio-missing-sync-file-refused",
+      "pass": true
+    },
+    {
+      "name": "stdio-disable-retains-markdown",
+      "pass": true
+    },
+    {
+      "name": "stdio-enable-existing-file-refused",
+      "pass": true
+    },
+    {
+      "name": "stdio-existing-file-unmodified",
+      "pass": true
+    }
+  ],
+  "toolsCalled": [
+    "zotero_convert_note_content",
+    "zotero_edit_note",
+    "zotero_get_note_relations",
+    "zotero_get_note_structure",
+    "zotero_get_note_sync",
+    "zotero_read_note",
+    "zotero_set_note_markdown",
+    "zotero_set_note_mode",
+    "zotero_sync_note"
+  ]
+}

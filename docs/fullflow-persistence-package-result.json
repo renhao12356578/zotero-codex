@@ -1,0 +1,21 @@
+{
+  "checks": [
+    {
+      "name": "note-persisted-after-host-exit",
+      "pass": true
+    },
+    {
+      "name": "syncNote-persisted-after-host-exit",
+      "pass": true
+    },
+    {
+      "name": "production-xpi-excludes-test-harness",
+      "pass": true
+    },
+    {
+      "name": "production-xpi-matches-source",
+      "pass": true
+    }
+  ],
+  "xpiSHA256": "1e13fd3496e4d60138b7c67f9b18397400ee5d94af98162c2643b206d0804ad3"
+}
