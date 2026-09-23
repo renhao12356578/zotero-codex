@@ -1,0 +1,16 @@
+{
+  "checks": [
+    {
+      "name": "stdio-actual-region-image",
+      "pass": true
+    },
+    {
+      "name": "stdio-region-source",
+      "pass": true
+    },
+    {
+      "name": "stdio-image-not-duplicated-in-text",
+      "pass": true
+    }
+  ]
+}

@@ -14,7 +14,7 @@ var ZoteroCodex = (() => {
       const saved = await Zotero.Items.getByLibraryAndKeyAsync(attachment.libraryID, annotationKey);
       if (saved?.parentID === attachment.id && saved.isAnnotation()) image = (await Zotero.Annotations.toJSON(saved)).image || '';
     }
-    if (['image', 'ink'].includes(annotation.type) && !image) throw new Error('区域图片尚未生成。请先保存为 Zotero 区域批注，再拖入。');
+    if (['image', 'ink'].includes(annotation.type) && !image) throw new Error('区域截图尚未生成，请稍后重新读取选区。');
     const card = {
       id: uuid(), kind: image ? 'pdf-region' : 'pdf-selection', libraryID: attachment.libraryID,
       attachmentKey: attachment.key, title: parent.getField('title') || attachment.getField('title'),
@@ -35,7 +35,7 @@ var ZoteroCodex = (() => {
   const ID = 'zotero-codex@local';
   const ENDPOINT = '/zotero-codex/mcp';
   const snapshots = new Map(), revisions = new Map(), writes = new Map(), windows = new Map();
-  let token, connectionPath, paneID, listener, queue = Promise.resolve(), running = false;
+  let token, connectionPath, paneID, listener, annotationObserverID, queue = Promise.resolve(), running = false;
   const identity = item => ({ libraryID: item.libraryID, key: item.key });
   const compact = item => ({ ...identity(item), itemID: item.id, type: Zotero.ItemTypes.getName(item.itemTypeID), title: item.isNote() ? item.getNoteTitle() : item.getField('title') });
   function resolve(ref, kind) {
@@ -51,14 +51,53 @@ var ZoteroCodex = (() => {
     const win = Zotero.getMainWindow();
     return Zotero.Reader.getByTabID(win?.Zotero_Tabs?.selectedID);
   }
-  async function capture(reader, annotation) {
-    // Install the pending entry synchronously: a slower older selection must never win.
-    const entry = { capturedAt: new Date().toISOString(), attachmentID: reader.itemID };
+  function beginCapture(reader, annotationKey) {
+    const entry = { capturedAt: new Date().toISOString(), attachmentID: reader.itemID, annotationKey };
     snapshots.set(readerID(reader), entry);
+    return entry;
+  }
+  async function capture(reader, annotation) {
+    const entry = beginCapture(reader, annotation.id || annotation.key);
     entry.ready = annotationCard(annotation, Zotero.Items.get(reader.itemID)).then(card => { entry.card = card; }, error => { entry.error = error.message; });
     await entry.ready;
     if (entry.error) throw new Error(entry.error);
     return entry.card;
+  }
+  function captureRegion(reader, item) {
+    // Reserve the snapshot before any I/O so a slow older image cannot replace
+    // a newer region or text selection. Never await this from the notifier:
+    // Zotero may still need to finish saving/rendering the annotation image.
+    const entry = beginCapture(reader, item.key);
+    entry.ready = (async () => {
+      for (let attempt = 0; attempt < 40; attempt++) {
+        if (!running || snapshots.get(readerID(reader)) !== entry
+          || !Zotero.Reader._readers.includes(reader)) return;
+        if (item.deleted || !Zotero.Items.get(item.id)) throw new Error('区域批注已删除，请重新框选');
+        const annotation = await Zotero.Annotations.toJSON(item);
+        if (annotation.image) {
+          entry.card = await annotationCard(annotation, Zotero.Items.get(reader.itemID));
+          return;
+        }
+        await Zotero.Promise.delay(250);
+      }
+      throw new Error('区域截图仍在生成或生成失败，请稍后重新框选；也可读取该页图片');
+    })().catch(error => { entry.error = error.message; });
+  }
+  function onAnnotationChange(event, type, ids, extraData) {
+    if (!running || type !== 'item') return;
+    if (event !== 'add') return;
+    for (const id of ids) {
+      try {
+        const item = Zotero.Items.get(id);
+        if (!item?.isAnnotation() || item.deleted || item.annotationType !== 'image') continue;
+        // Reader saves carry their instance ID. Ignore sync/import/batch-created
+        // annotations, and never assign another reader's region to the active tab.
+        const instanceID = extraData?.[id]?.instanceID;
+        if (!instanceID) continue;
+        const reader = Zotero.Reader._readers.find(r => r._instanceID === instanceID && r.itemID === item.parentID);
+        if (reader) captureRegion(reader, item);
+      } catch (error) { Zotero.logError(error); }
+    }
   }
   function noteState(note) {
     const api = Zotero.BetterNotes?.api;
@@ -393,7 +432,7 @@ var ZoteroCodex = (() => {
   async function execute(name, args) {
     ZoteroMCPContract.validateCall(name, args);
     switch (name) {
-      case 'zotero_status': return { version: '0.5.0', zoteroVersion: Zotero.version, betterNotes: Boolean(Zotero.BetterNotes?.api), connected: running };
+      case 'zotero_status': return { version: '0.5.1', zoteroVersion: Zotero.version, betterNotes: Boolean(Zotero.BetterNotes?.api), connected: running };
       case 'zotero_get_context': return context();
       case 'zotero_resolve_item': {
         const libraryID = args.groupId ? Zotero.Groups.getLibraryIDFromGroupID(args.groupId) : Zotero.Libraries.userLibraryID;
@@ -403,10 +442,16 @@ var ZoteroCodex = (() => {
       case 'zotero_get_selection': {
         const reader = args.readerID ? Zotero.Reader._readers.find(r => readerID(r) === args.readerID) : activeReader();
         if (!reader) throw new Error('请打开论文阅读器，或提供 get_context 返回的 readerID');
-        const entry = snapshots.get(readerID(reader));
-        if (!entry || entry.attachmentID !== reader.itemID) throw new Error('该阅读器没有选区快照，请在 PDF 中选中文字，或拖批注到 MCP 侧栏');
-        await entry.ready;
+        let entry;
+        // A new selection can arrive while an image is being prepared. Return
+        // the current snapshot, never the superseded one we first waited for.
+        do {
+          entry = snapshots.get(readerID(reader));
+          if (!entry || entry.attachmentID !== reader.itemID) throw new Error('该阅读器没有选区快照，请在 PDF 中选中文字或用区域批注工具框选');
+          await entry.ready;
+        } while (snapshots.get(readerID(reader)) !== entry);
         if (entry.error) throw new Error(entry.error);
+        if (!entry.card) throw new Error('阅读器已关闭或截图已取消，请重新框选');
         const ageSeconds = Math.round((Date.now() - Date.parse(entry.capturedAt)) / 1000);
         if (ageSeconds > (args.maxAgeSeconds || 1800)) throw new Error('选区快照已过期，请重新选择');
         return { snapshot: true, readerID: readerID(reader), ageSeconds, selection: entry.card };
@@ -459,8 +504,8 @@ var ZoteroCodex = (() => {
     const make = (tag, text) => { const n = doc.createElementNS('http://www.w3.org/1999/xhtml', tag); n.textContent = text; return n; };
     const panel = make('div', ''); panel.className = 'zc-mcp';
     panel.style.cssText = 'padding:12px;display:grid;gap:10px;font:inherit;line-height:1.6';
-    panel.append(make('strong', 'MCP 已就绪 · 0.5.0'), make('div', '在 Codex 中直接提问。PDF 文字选区会自动保存为上下文快照。'));
-    const drop = make('div', '拖入 Zotero 文字或区域批注，提供给 Codex');
+    panel.append(make('strong', 'MCP 已就绪 · 0.5.1'), make('div', '在 Codex 中直接提问。文字选区与新建区域批注会自动保存为上下文快照。'));
+    const drop = make('div', '框选区域后自动准备截图；也可拖入已有批注');
     drop.style.cssText = 'padding:12px;border:1px dashed var(--fill-secondary,#aaa);border-radius:10px';
     drop.addEventListener('dragover', e => e.preventDefault());
     drop.addEventListener('drop', async e => {
@@ -500,7 +545,7 @@ var ZoteroCodex = (() => {
     // Create privately before writing any secret; never log the token.
     await IOUtils.writeUTF8(connectionPath, '{}', { mode: 'overwrite', permissions: 0o600 });
     await IOUtils.setPermissions(connectionPath, 0o600);
-    await IOUtils.writeUTF8(connectionPath, JSON.stringify({ url: `http://127.0.0.1:${Zotero.Server.port}${ENDPOINT}`, token, version: '0.5.0' }));
+    await IOUtils.writeUTF8(connectionPath, JSON.stringify({ url: `http://127.0.0.1:${Zotero.Server.port}${ENDPOINT}`, token, version: '0.5.1' }));
     for (const win of Zotero.getMainWindows()) prepareWindow(win);
     paneID = Zotero.ItemPaneManager.registerSection({ paneID: 'zotero-codex-mcp', pluginID: ID,
       header: { l10nID: 'zotero-codex-title', icon: 'chrome://zotero-codex/content/icon.svg', darkIcon: 'chrome://zotero-codex/content/icon-dark.svg' },
@@ -520,10 +565,13 @@ var ZoteroCodex = (() => {
     };
     Zotero.Reader.registerEventListener('renderTextSelectionPopup', listener, ID);
     running = true;
-    Zotero.ZoteroCodex = { version: '0.5.0', dispatch, capture, annotationCard };
+    annotationObserverID = Zotero.Notifier.registerObserver({notify:onAnnotationChange}, ['item'], 'zotero-codex-regions');
+    Zotero.ZoteroCodex = { version: '0.5.1', dispatch, capture, annotationCard };
   }
   async function stop() {
     running = false;
+    if (annotationObserverID !== undefined) Zotero.Notifier.unregisterObserver(annotationObserverID);
+    annotationObserverID = undefined;
     await queue;
     delete Zotero.Server.Endpoints[ENDPOINT];
     if (listener) Zotero.Reader.unregisterEventListener('renderTextSelectionPopup', listener);

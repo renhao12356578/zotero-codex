@@ -26,7 +26,7 @@ async function fixture() {
     relation:{getNoteLinkInboundRelation:async()=>[{fromKey:'OTHER001'}],getNoteLinkOutboundRelation:async()=>[{toKey:'OTHER002'}]},
     convert:{html2md:async s=>s.replace(/<[^>]+>/g,''),md2html:async s=>'<p>'+s+'</p>'}
   };
-  const Zotero = {BetterNotes:{api,hooks:{onOpenNote:async()=>{active=true;},onSyncing:async()=>{
+  const Zotero = {Notifier:{registerObserver:()=>1,unregisterObserver:()=>{}},BetterNotes:{api,hooks:{onOpenNote:async()=>{active=true;},onSyncing:async()=>{
     if(failSync)return;
     const md=JSON.parse(files.get('/notes/Title-NOTE0001.md'));
     if(hash(md.content)!==syncStatus.md5)html=md.content;

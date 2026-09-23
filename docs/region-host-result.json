@@ -1,0 +1,25 @@
+{
+  "stage": "automatic-region-capture",
+  "checks": [
+    {
+      "name": "reader-region-auto-captured-without-drop",
+      "pass": true
+    },
+    {
+      "name": "real-pdf-region-image",
+      "pass": true
+    },
+    {
+      "name": "region-page-and-source",
+      "pass": true
+    },
+    {
+      "name": "new-region-replaces-previous",
+      "pass": true
+    },
+    {
+      "name": "different-region-different-image",
+      "pass": true
+    }
+  ]
+}

@@ -11,7 +11,7 @@ const prefs=await readFile(base+'/profile/user.js','utf8');
 if(!prefs.includes(JSON.stringify(base+'/data')))throw new Error('Invalid isolated data directory');
 const f=JSON.parse(await readFile(base+'/fixtures.json','utf8'));
 const cfg=JSON.parse(await readFile(base+'/connection.json','utf8'));
-const client=new Client({name:'fullflow-extra',version:'0.5.0'});
+const client=new Client({name:'fullflow-extra',version:'0.5.1'});
 const transport=new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../mcp/server.mjs',import.meta.url)),'--connection-file',base+'/connection.json'],env:{ZOTERO_LOCAL_BASE_URL:new URL(cfg.url).origin,ZOTERO_LOCAL_KEY_STORE:base+'/native-keys.json'},stderr:'pipe'});
 const report={at:new Date().toISOString(),checks:[],toolsCalled:[]};
 const check=(name,pass)=>{report.checks.push({name,pass:Boolean(pass)});if(!pass)throw new Error(name);};

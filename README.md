@@ -1,4 +1,4 @@
-# Zotero Codex MCP 0.5.0
+# Zotero Codex MCP 0.5.1
 
 在 Zotero 看论文、写 Better Notes，在 Codex 中直接读 PDF、讨论选区、编辑笔记。
 
@@ -17,6 +17,8 @@
 - 附件定位与已有全文读取使用原代码；按页文字和图片直接使用 Mozilla PDF.js。归属说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 合并依据、工具迁移和取舍见 [docs/tool-consolidation.md](docs/tool-consolidation.md)。旧 `zotero_library_*` 名称不再暴露；搜索使用 `q`，条目读取使用 `itemKey`，不再使用旧版 `query`/`item` 参数。
+
+0.5.1 新增区域截图自动捕获：框选后直接向 Codex 提问，不必再拖入侧栏。
 
 ## 可以做什么
 
@@ -56,7 +58,7 @@
    npm ci
    npm run build
    ```
-2. Zotero → 工具 → 插件 → 齿轮 → 从文件安装，选择 `dist/zotero-codex-0.5.0.xpi`。
+2. Zotero → 工具 → 插件 → 齿轮 → 从文件安装，选择 `dist/zotero-codex-0.5.1.xpi`。
 3. 添加 MCP，路径替换为本机绝对路径：
 
 ```sh
@@ -114,7 +116,7 @@ edit_note(note, revision, requestID,
 - 全文索引入口统一为 `zotero_get_item_fulltext(itemKey,offset,maxCharacters,expectedRevision?)`：默认每次读取 5 万字符，单次最多 50 万字符；这不是全文总长度限制。用返回的 attachmentKey、nextOffset 和 revision（传入 expectedRevision）继续读，直到 nextOffset=null。正文变化时有校验，UTF-16 偏移不会拆开 Unicode 代理对。按页看图仍使用 read_pdf。
 - 默认只读文件内的文字层；扫描件可传页面图片给 Codex 理解，没有独立 OCR 引擎。
 - 文献有多个 PDF 时必须选择明确的附件 key。
-- PDF 文字弹窗出现时保存选区快照；区域批注可拖入 MCP 状态侧栏，也可从保存的批注工具读取图片。
+- PDF 文字弹窗出现时保存选区快照；使用 Zotero 区域批注工具框选后，自动等待截图生成并保存区域快照，无需拖拽。读取 `get_selection` 即返回图片、页码和来源；已有批注仍可拖入侧栏。只捕获 Reader 新建区域，后台同步/导入不覆盖当前上下文。
 - 快照按 readerID 分开，默认 30 分钟过期，带来源和时间，不代表当前仍高亮。
 
 ## 验证

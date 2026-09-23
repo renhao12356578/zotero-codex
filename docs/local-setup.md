@@ -15,7 +15,7 @@ npm run build
 
 ## 2. 安装插件
 
-Zotero → 工具 → 插件 → 齿轮菜单 → 从文件安装插件，选择 `dist/zotero-codex-0.5.0.xpi`。也可从 [Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载同版本 XPI。
+Zotero → 工具 → 插件 → 齿轮菜单 → 从文件安装插件，选择 `dist/zotero-codex-0.5.1.xpi`。也可从 [Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载同版本 XPI。
 
 在 Zotero 高级设置开启“允许此计算机上的其他应用程序与 Zotero 通信”，并启用 Better Notes。插件启用后，Zotero profile 目录会生成 `zotero-codex-mcp.json`；它含有本机连接令牌，不要公开或上传。profile 是 Zotero 的配置目录，通常不同于存储论文和数据库的数据目录。
 

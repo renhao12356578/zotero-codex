@@ -1,3 +1,13 @@
+# 当前实现：0.5.1，区域截图自动捕获
+
+2026-09-23。新增 Reader 区域批注自动捕获：无需拖拽即可通过 get_selection 读取实际 PNG、页码和来源。后台导入/同步不覆盖快照，异步图像不能覆盖更新的区域或文字选择。
+
+本轮验证：37 项自动化测试、5 项真实 Reader 区域渲染/捕获检查、3 项 MCP stdio 图片检查通过。报告见 `region-host-result.json`、`region-stdio-result.json`。图形宿主测试使用程序创建真实 Reader 批注，未验收实际鼠标手势。
+
+安装包：`dist/zotero-codex-0.5.1.xpi`。同时更新 Node 服务并重新加载 MCP。日常运行中的旧 XPI 未直接替换。
+
+---
+
 # 当前实现：0.5.0，Better Notes API 接入
 
 2026-09-22。43 个 MCP 工具：复用上游 28 个工具，其中状态入口合并；15 个补充工具负责实时上下文、PDF 和 Better Notes。

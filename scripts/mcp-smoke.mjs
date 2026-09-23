@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 const file=process.argv[2];
 if(!file) throw new Error('Usage: node scripts/mcp-smoke.mjs <connection.json> [isolated-base]');
-const client=new Client({name:'zotero-mcp-smoke',version:'0.5.0'});
+const client=new Client({name:'zotero-mcp-smoke',version:'0.5.1'});
 const base=process.argv[3];
 if(base && (!base.includes('/zotero-codex-host-')||file!==base+'/connection.json'))throw new Error('Writes require isolated fixture');
 const env=base ? {ZOTERO_LOCAL_BASE_URL:new URL(JSON.parse(await readFile(file,'utf8')).url).origin,ZOTERO_LOCAL_KEY_STORE:base+'/native-keys.json'} : undefined;

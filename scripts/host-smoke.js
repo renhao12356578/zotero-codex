@@ -7,7 +7,7 @@
     const win = Zotero.getMainWindow(), plugin = Zotero.ZoteroCodex;
     // Only this isolated fixture grants its own native API client test consent.
     Zotero.Server.LocalAPI._promptForAuthorization = async appName => ({allow:appName === 'Zotero Codex MCP',remember:true});
-    record('plugin-started', plugin?.version === '0.5.0');
+    record('plugin-started', plugin?.version === '0.5.1');
     for (let i = 0; i < 40 && !Zotero.BetterNotes?.api; i++) await Zotero.Promise.delay(250);
     record('better-notes-loaded', Boolean(Zotero.BetterNotes?.api));
     const paper = new Zotero.Item('journalArticle'); paper.setField('title', 'MCP synthetic fixture'); await paper.saveTx();
