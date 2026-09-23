@@ -1,6 +1,6 @@
 // Runs only against the synthetic library created by prepare-host-smoke.py.
 (async () => {
- const result={version:'0.5.1',stage:'better-notes-api',checks:[]};
+ const result={version:'0.6.0',stage:'better-notes-api',checks:[]};
  const record=(name,pass)=>{result.checks.push({name,pass:Boolean(pass)});if(!pass)throw new Error('Failed: '+name);};
  try {
   if(Zotero.DataDirectory.dir!==PathUtils.join(base,'data'))throw new Error('Not an isolated library');

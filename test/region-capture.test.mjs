@@ -8,16 +8,21 @@ import contract from '../addon/content/mcp-schema.js';
 const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jr1sAAAAASUVORK5CYII=';
 async function fixture(t) {
  const items=new Map(),readers=[{itemID:1,tabID:'one',_instanceID:'instance-one'},{itemID:2,tabID:'two',_instanceID:'instance-two'}],pending=[];
- let observer,unregistered=false;
+ let observer,unregistered=false,listener,registeredPane,removedPane;
+ const prefs=new Map(),files=new Map();
+ prefs.set('extensions.zotero-codex.mcpConnectionFile','/private/profile/connection.json');
+ prefs.set('httpServer.localAPI.enabled',true);
  for(const id of [1,2])items.set(id,{id,key:'PDF0000'+id,libraryID:1,isAttachment:()=>true,getField:()=> 'Fixture'});
  const Zotero={Items:{get:id=>items.get(Number(id)),getByLibraryAndKeyAsync:async(lib,key)=>[...items.values()].find(i=>i.key===key)},
   Libraries:{get:()=>({libraryType:'user'})},Annotations:{toJSON:async item=>({key:item.key,type:'image',pageLabel:'1',position:{pageIndex:0,rects:[[0,0,20,20]]},image:item.image})},
-  Reader:{_readers:readers,getByTabID:id=>readers.find(r=>r.tabID===id),registerEventListener:()=>{},unregisterEventListener:()=>{}},
+  Reader:{_readers:readers,getByTabID:id=>readers.find(r=>r.tabID===id),registerEventListener:(name,fn)=>{listener=fn;},unregisterEventListener:()=>{}},
   Notifier:{registerObserver:o=>{observer=o;return 7;},unregisterObserver:id=>{assert.equal(id,7);unregistered=true;}},
   Promise:{delay:()=>new Promise(resolve=>pending.push(resolve))},Fulltext:{getItemCacheFile:()=>({path:'/none'})},
-  Prefs:{get:()=>'/connection'},Server:{init:async()=>{},Endpoints:{}},getMainWindows:()=>[],getMainWindow:()=>({Zotero_Tabs:{selectedID:'one'}}),
+  Prefs:{get:key=>prefs.get(key),set:(key,value)=>prefs.set(key,value)},Server:{init:async()=>{},Endpoints:{},port:23119},
+  PreferencePanes:{register:async options=>{registeredPane=options;return options.id;},unregister:id=>{removedPane=id;}},
+  HTTP:{request:async(method,url)=>({status:method==='POST'?200:prefs.get('httpServer.localAPI.enabled')?200:403})},getMainWindows:()=>[],getMainWindow:()=>({Zotero_Tabs:{selectedID:'one'}}),
   ItemPaneManager:{registerSection:()=> 'panel',unregisterSection:()=>{}},logError:error=>{throw error;}};
- const scope=vm.createContext({Zotero,ZoteroCodexCore:Core,ZoteroMCPContract:contract,Services:{uuid:{generateUUID:()=>randomUUID()},wm:{getMostRecentWindow:()=>null}},IOUtils:{writeUTF8:async()=>{},setPermissions:async()=>{},remove:async()=>{},exists:async()=>false},PathUtils:{join:(...s)=>s.join('/')}});
+ const scope=vm.createContext({Zotero,ZoteroCodexCore:Core,ZoteroMCPContract:contract,Services:{uuid:{generateUUID:()=>randomUUID()},wm:{getMostRecentWindow:()=>null}},IOUtils:{writeUTF8:async(p,s)=>files.set(p,s),setPermissions:async()=>{},remove:async p=>files.delete(p),exists:async p=>files.has(p),stat:async()=>({type:'regular'})},PathUtils:{join:(...s)=>s.join('/'),isAbsolute:p=>p.startsWith('/')}});
  vm.runInContext(await readFile(new URL('../addon/content/plugin.js',import.meta.url),'utf8'),scope);
  await scope.ZoteroCodex.start();
  t.after(async()=>{await scope.ZoteroCodex.stop();pending.splice(0).forEach(resolve=>resolve());});
@@ -27,7 +32,13 @@ async function fixture(t) {
   assert.equal(returned,undefined,'notifier must not await screenshot readiness');return item;
  };
  const tick=async()=>{await new Promise(resolve=>setImmediate(resolve));pending.splice(0).forEach(resolve=>resolve());await new Promise(resolve=>setImmediate(resolve));};
- return {add,tick,readers,items,read:(readerID='one')=>Zotero.ZoteroCodex.dispatch('zotero_get_selection',{readerID}),capture:(annotation)=>Zotero.ZoteroCodex.capture(readers[0],annotation),stop:()=>scope.ZoteroCodex.stop(),unregistered:()=>unregistered};
+ const popup=()=>{
+   const button={textContent:'',events:{},addEventListener:(name,fn)=>{button.events[name]=fn;}};
+   listener({reader:readers[0],params:{annotation:{text:'selected text',pageLabel:'1',position:{pageIndex:0}}},doc:{createElementNS:()=>button},append:()=>{}});
+   return button;
+ };
+ const request=(data,authorized=true)=>new Zotero.Server.Endpoints['/zotero-codex/mcp']().init({headers:{authorization:authorized?'Bearer '+JSON.parse(files.get('/private/profile/connection.json')).token:'invalid'},data});
+ return {prefs,files,popup,request,settings:Zotero.ZoteroCodex.settings,registeredPane:()=>registeredPane,removedPane:()=>removedPane,restart:()=>scope.ZoteroCodex.start(),add,tick,readers,items,read:(readerID='one')=>Zotero.ZoteroCodex.dispatch('zotero_get_selection',{readerID}),capture:(annotation)=>Zotero.ZoteroCodex.capture(readers[0],annotation),stop:()=>scope.ZoteroCodex.stop(),unregistered:()=>unregistered};
 }
 test('reader-created region captures screenshot and source automatically, without dragging',async t=>{
  const f=await fixture(t),item=f.add(10);const r=await f.read();
@@ -51,4 +62,45 @@ test('missing image times out clearly; shutdown unregisters and cancels pending 
  const f=await fixture(t);f.add(10,{ready:false});const failure=assert.rejects(f.read(),/截图仍在生成/);
  for(let i=0;i<41;i++)await f.tick();await failure;
  f.add(11,{ready:false});await f.stop();await f.tick();assert.equal(f.unregistered(),true);
+});
+test('capture preferences persist, clear disabled automatic snapshots, and preserve manual capture',async t=>{
+ const f=await fixture(t);
+ assert.equal(f.settings.state().autoText,true);assert.equal(f.settings.state().autoRegion,true);
+ assert.equal(f.registeredPane().label,'Zotero MCP');
+ f.add(10);await f.read();f.settings.setCapturePreference('autoRegion',false);
+ await assert.rejects(f.read(),/没有选区/);f.add(11);await assert.rejects(f.read(),/没有选区/);
+ f.settings.setCapturePreference('autoText',false);const button=f.popup();await f.tick();await assert.rejects(f.read(),/没有选区/);
+ assert.equal(button.textContent,'添加到 MCP');button.events.click();await f.tick();assert.equal((await f.read()).selection.text,'selected text');
+ f.settings.setCapturePreference('autoText',false);assert.equal((await f.read()).selection.text,'selected text');
+ f.settings.clearContext();await assert.rejects(f.read(),/没有选区/);
+ await f.stop();assert.equal(f.removedPane(),'zotero-codex-preferences');await f.restart();
+ assert.equal(f.settings.state().autoRegion,false);assert.equal(f.settings.state().autoText,false);
+ f.settings.setCapturePreference('autoText',true);f.popup();await f.tick();assert.equal((await f.read()).selection.text,'selected text');
+ f.settings.setCapturePreference('autoText',false);await assert.rejects(f.read(),/没有选区/);
+});
+test('disable and clear cancel pending regions even when a selection read is in progress',async t=>{
+ const f=await fixture(t),item=f.add(10,{ready:false});
+ const result=assert.rejects(f.read(),/没有选区/);await new Promise(r=>setImmediate(r));
+ f.settings.setCapturePreference('autoRegion',false);item.image=image;await f.tick();await result;
+ f.settings.setCapturePreference('autoRegion',true);const second=f.add(11,{ready:false});
+ f.settings.clearContext();second.image=image;await f.tick();await assert.rejects(f.read(),/没有选区/);
+});
+test('settings distinguish authenticated client activity, redact diagnostics and copy usable configuration',async t=>{
+ const f=await fixture(t),settings=f.settings;
+ assert.equal(settings.state().lastRequestAt,null);
+ await f.request({name:'zotero_status',arguments:{}},false);assert.equal(settings.state().lastRequestAt,null);
+ await f.request({name:'zotero_status',arguments:{},source:'preferences-diagnostic'});assert.equal(settings.state().lastRequestAt,null);
+ const client={version:'0.6.0',nodePath:'/private/node',serverPath:'/private/project/mcp/server.mjs'};
+ await f.request({name:'zotero_status',arguments:{},client});
+ assert.ok(settings.state().lastRequestAt);assert.equal(settings.state().serverVersion,'0.6.0');
+ const at=settings.state().lastRequestAt;f.files.set(client.nodePath,'node');f.files.set(client.serverPath,'server');
+ const config=JSON.parse(await settings.connectionConfig());assert.equal(config.mcpServers.zotero.command,client.nodePath);
+ assert.deepEqual(config.mcpServers.zotero.args,[client.serverPath,'--connection-file','/private/profile/connection.json']);
+ assert.ok(!JSON.stringify(config).includes('token'));
+ f.prefs.set('httpServer.localAPI.enabled',false);
+ const report=await settings.diagnose();assert.equal(report.nativeAPI.status,403);assert.equal(report.bridge.ok,true);
+ assert.equal(settings.state().lastRequestAt,at);
+ const encoded=JSON.stringify(report);assert.ok(!encoded.includes('/private'));assert.ok(!encoded.includes('token'));
+ assert.ok(!encoded.includes(JSON.parse(f.files.get('/private/profile/connection.json')).token));
+ settings.saveConnectionSettings('node','/missing/server.mjs');await assert.rejects(settings.connectionConfig(),/完整路径/);
 });

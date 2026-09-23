@@ -35,7 +35,71 @@ var ZoteroCodex = (() => {
   const ID = 'zotero-codex@local';
   const ENDPOINT = '/zotero-codex/mcp';
   const snapshots = new Map(), revisions = new Map(), writes = new Map(), windows = new Map();
-  let token, connectionPath, paneID, listener, annotationObserverID, queue = Promise.resolve(), running = false;
+  const PREF = 'extensions.zotero-codex.';
+  const SETTINGS_ID = 'zotero-codex-preferences';
+  let token, connectionPath, paneID, preferencePaneID, listener, annotationObserverID, lastRequestAt = null, clientRuntime = null, queue = Promise.resolve(), running = false;
+  const automatic = kind => Zotero.Prefs.get(PREF + kind, true) !== false;
+  function clearContext() { snapshots.clear(); }
+  function setCapturePreference(kind, enabled) {
+    if (!['autoText', 'autoRegion'].includes(kind) || typeof enabled !== 'boolean') throw new Error('无效的捕获设置');
+    Zotero.Prefs.set(PREF + kind, enabled, true);
+    if (!enabled) for (const [id, entry] of snapshots) if (entry.automatic === kind) snapshots.delete(id);
+  }
+  function settingsState() {
+    return {
+      version: Zotero.ZoteroCodex?.version, zoteroVersion: Zotero.version,
+      bridgeReady: running && Boolean(Zotero.Server.Endpoints[ENDPOINT]),
+      nativeAPIEnabled: Boolean(Zotero.Prefs.get('httpServer.localAPI.enabled')),
+      betterNotes: Boolean(Zotero.BetterNotes?.api), lastRequestAt,
+      serverVersion: clientRuntime?.version || null,
+      autoText: automatic('autoText'), autoRegion: automatic('autoRegion'), snapshotCount: snapshots.size,
+      connectionPath,
+      nodePath: Zotero.Prefs.get(PREF + 'nodePath', true) || clientRuntime?.nodePath || 'node',
+      serverPath: Zotero.Prefs.get(PREF + 'serverPath', true) || clientRuntime?.serverPath || '',
+    };
+  }
+  function saveConnectionSettings(nodePath, serverPath) {
+    for (const value of [nodePath, serverPath]) if (typeof value !== 'string' || value.length > 4096 || /[\r\n\0]/.test(value)) throw new Error('路径无效');
+    Zotero.Prefs.set(PREF + 'nodePath', nodePath.trim(), true);
+    Zotero.Prefs.set(PREF + 'serverPath', serverPath.trim(), true);
+  }
+  async function connectionConfig() {
+    const {nodePath, serverPath} = settingsState();
+    if (!serverPath || !PathUtils.isAbsolute(serverPath) || !(await IOUtils.exists(serverPath))) throw new Error('请填写已安装的 mcp/server.mjs 的完整路径');
+    if ((await IOUtils.stat(serverPath)).type !== 'regular') throw new Error('MCP 服务路径必须是文件');
+    if (nodePath !== 'node' && (!PathUtils.isAbsolute(nodePath) || !(await IOUtils.exists(nodePath)))) throw new Error('请填写 Node.js 可执行文件的完整路径，或使用 node');
+    if (nodePath !== 'node' && (await IOUtils.stat(nodePath)).type !== 'regular') throw new Error('Node.js 路径必须是可执行文件');
+    return JSON.stringify({mcpServers:{zotero:{command:nodePath,args:[serverPath,'--connection-file',connectionPath]}}}, null, 2);
+  }
+  function revealConnection() {
+    const file = Zotero.File.pathToFile(connectionPath);
+    try { file.reveal(); } catch { Zotero.launchFile(file.parent); }
+  }
+  async function diagnose() {
+    const base = `http://127.0.0.1:${Zotero.Server.port}`;
+    const check = async (method, url, options = {}) => {
+      try {
+        // Zotero's local server requires this header for its own privileged
+        // XHR (which carries a Mozilla User-Agent). Endpoint token checks stay on.
+        const response = await Zotero.HTTP.request(method, url, {...options, headers:{'Zotero-Allowed-Request':'true',...options.headers}, timeout:5000, successCodes:false});
+        return {ok:response.status === 200, status:response.status};
+      }
+      catch { return {ok:false, status:null}; }
+    };
+    const [bridge, nativeAPI] = await Promise.all([
+      check('POST', base + ENDPOINT, {headers:{'Content-Type':'application/json',Authorization:'Bearer ' + token}, body:JSON.stringify({name:'zotero_status',arguments:{},source:'preferences-diagnostic'})}),
+      check('GET', base + '/api/users/0/items?limit=1'),
+    ]);
+    let connectionFilePresent = false;
+    try { connectionFilePresent = await IOUtils.exists(connectionPath); } catch {}
+    const state = settingsState();
+    // Deliberately allowlist fields: no paths, credentials, item titles, note
+    // content or raw exception strings enter the copyable diagnostic report.
+    return {checkedAt:new Date().toISOString(), version:state.version, zoteroVersion:state.zoteroVersion,
+      bridge, nativeAPI, connectionFilePresent, nativeAPIEnabled:state.nativeAPIEnabled,
+      betterNotes:state.betterNotes, lastRequestAt, serverVersion:state.serverVersion,
+      autoText:state.autoText, autoRegion:state.autoRegion, snapshotCount:state.snapshotCount};
+  }
   const identity = item => ({ libraryID: item.libraryID, key: item.key });
   const compact = item => ({ ...identity(item), itemID: item.id, type: Zotero.ItemTypes.getName(item.itemTypeID), title: item.isNote() ? item.getNoteTitle() : item.getField('title') });
   function resolve(ref, kind) {
@@ -51,13 +115,13 @@ var ZoteroCodex = (() => {
     const win = Zotero.getMainWindow();
     return Zotero.Reader.getByTabID(win?.Zotero_Tabs?.selectedID);
   }
-  function beginCapture(reader, annotationKey) {
-    const entry = { capturedAt: new Date().toISOString(), attachmentID: reader.itemID, annotationKey };
+  function beginCapture(reader, annotationKey, automatic) {
+    const entry = { capturedAt: new Date().toISOString(), attachmentID: reader.itemID, annotationKey, automatic };
     snapshots.set(readerID(reader), entry);
     return entry;
   }
-  async function capture(reader, annotation) {
-    const entry = beginCapture(reader, annotation.id || annotation.key);
+  async function capture(reader, annotation, automatic) {
+    const entry = beginCapture(reader, annotation.id || annotation.key, automatic);
     entry.ready = annotationCard(annotation, Zotero.Items.get(reader.itemID)).then(card => { entry.card = card; }, error => { entry.error = error.message; });
     await entry.ready;
     if (entry.error) throw new Error(entry.error);
@@ -67,7 +131,7 @@ var ZoteroCodex = (() => {
     // Reserve the snapshot before any I/O so a slow older image cannot replace
     // a newer region or text selection. Never await this from the notifier:
     // Zotero may still need to finish saving/rendering the annotation image.
-    const entry = beginCapture(reader, item.key);
+    const entry = beginCapture(reader, item.key, 'autoRegion');
     entry.ready = (async () => {
       for (let attempt = 0; attempt < 40; attempt++) {
         if (!running || snapshots.get(readerID(reader)) !== entry
@@ -84,7 +148,7 @@ var ZoteroCodex = (() => {
     })().catch(error => { entry.error = error.message; });
   }
   function onAnnotationChange(event, type, ids, extraData) {
-    if (!running || type !== 'item') return;
+    if (!running || !automatic('autoRegion') || type !== 'item') return;
     if (event !== 'add') return;
     for (const id of ids) {
       try {
@@ -432,7 +496,7 @@ var ZoteroCodex = (() => {
   async function execute(name, args) {
     ZoteroMCPContract.validateCall(name, args);
     switch (name) {
-      case 'zotero_status': return { version: '0.5.1', zoteroVersion: Zotero.version, betterNotes: Boolean(Zotero.BetterNotes?.api), connected: running };
+      case 'zotero_status': return { version: '0.6.0', zoteroVersion: Zotero.version, betterNotes: Boolean(Zotero.BetterNotes?.api), connected: running };
       case 'zotero_get_context': return context();
       case 'zotero_resolve_item': {
         const libraryID = args.groupId ? Zotero.Groups.getLibraryIDFromGroupID(args.groupId) : Zotero.Libraries.userLibraryID;
@@ -504,8 +568,11 @@ var ZoteroCodex = (() => {
     const make = (tag, text) => { const n = doc.createElementNS('http://www.w3.org/1999/xhtml', tag); n.textContent = text; return n; };
     const panel = make('div', ''); panel.className = 'zc-mcp';
     panel.style.cssText = 'padding:12px;display:grid;gap:10px;font:inherit;line-height:1.6';
-    panel.append(make('strong', 'MCP 已就绪 · 0.5.1'), make('div', '在 Codex 中直接提问。文字选区与新建区域批注会自动保存为上下文快照。'));
-    const drop = make('div', '框选区域后自动准备截图；也可拖入已有批注');
+    panel.append(make('strong', 'MCP 已就绪 · 0.6.0'), make('div', '在 Codex 中直接提问。可在设置中管理文字选区和区域截图的自动捕获。'));
+    const settingsButton = make('button', '打开 MCP 设置');
+    settingsButton.addEventListener('click', () => Zotero.Utilities.Internal.openPreferences(SETTINGS_ID));
+    panel.append(settingsButton);
+    const drop = make('div', '可拖入已有批注；区域自动捕获可在设置中开关');
     drop.style.cssText = 'padding:12px;border:1px dashed var(--fill-secondary,#aaa);border-radius:10px';
     drop.addEventListener('dragover', e => e.preventDefault());
     drop.addEventListener('drop', async e => {
@@ -527,6 +594,7 @@ var ZoteroCodex = (() => {
     body.append(panel);
   }
   async function start() {
+    lastRequestAt = null; clientRuntime = null;
     token = uuid() + uuid();
     connectionPath = Zotero.Prefs.get('extensions.zotero-codex.mcpConnectionFile', true) || PathUtils.join(PathUtils.profileDir, 'zotero-codex-mcp.json');
     await Zotero.Server.init();
@@ -537,6 +605,13 @@ var ZoteroCodex = (() => {
         if (headers.origin || headers.authorization !== 'Bearer ' + token) return [403, 'application/json', JSON.stringify({ error: 'Forbidden' })];
         try {
           if (!data || typeof data !== 'object' || JSON.stringify(data).length > 100000) throw new Error('Invalid request');
+          ZoteroMCPContract.validateCall(data.name, data.arguments || {});
+          if (data.source !== 'preferences-diagnostic') {
+            lastRequestAt = new Date().toISOString();
+            if (data.client && /^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(data.client.version) && ['version', 'nodePath', 'serverPath'].every(key => typeof data.client[key] === 'string' && data.client[key].length < 4096 && !/[\r\n\0]/.test(data.client[key]))) {
+              clientRuntime = {version:data.client.version,nodePath:data.client.nodePath,serverPath:data.client.serverPath};
+            }
+          }
           return [200, 'application/json', JSON.stringify(await dispatch(data.name, data.arguments || {}))];
         } catch (error) { return [400, 'application/json', JSON.stringify({ error: error.message })]; }
       },
@@ -545,7 +620,7 @@ var ZoteroCodex = (() => {
     // Create privately before writing any secret; never log the token.
     await IOUtils.writeUTF8(connectionPath, '{}', { mode: 'overwrite', permissions: 0o600 });
     await IOUtils.setPermissions(connectionPath, 0o600);
-    await IOUtils.writeUTF8(connectionPath, JSON.stringify({ url: `http://127.0.0.1:${Zotero.Server.port}${ENDPOINT}`, token, version: '0.5.1' }));
+    await IOUtils.writeUTF8(connectionPath, JSON.stringify({ url: `http://127.0.0.1:${Zotero.Server.port}${ENDPOINT}`, token, version: '0.6.0' }));
     for (const win of Zotero.getMainWindows()) prepareWindow(win);
     paneID = Zotero.ItemPaneManager.registerSection({ paneID: 'zotero-codex-mcp', pluginID: ID,
       header: { l10nID: 'zotero-codex-title', icon: 'chrome://zotero-codex/content/icon.svg', darkIcon: 'chrome://zotero-codex/content/icon-dark.svg' },
@@ -558,15 +633,25 @@ var ZoteroCodex = (() => {
       const annotation = JSON.parse(JSON.stringify(event.params.annotation || {}));
       if (!annotation.text && !annotation.image && !['image', 'ink'].includes(annotation.type)) return;
       const button = event.doc.createElementNS('http://www.w3.org/1999/xhtml', 'button');
-      button.textContent = 'MCP 正在保存选区';
-      const save = () => capture(event.reader, annotation).then(() => { button.textContent = 'MCP 已记录选区'; }, error => { button.textContent = error.message; });
+      button.textContent = automatic('autoText') ? 'MCP 正在保存选区' : '添加到 MCP';
+      const save = auto => capture(event.reader, annotation, auto ? 'autoText' : undefined).then(() => { button.textContent = 'MCP 已记录选区'; }, error => { button.textContent = error.message; });
       button.addEventListener('mousedown', e => e.preventDefault());
-      button.addEventListener('click', save); event.append(button); void save();
+      button.addEventListener('click', () => { void save(false); }); event.append(button);
+      if (automatic('autoText')) void save(true);
     };
     Zotero.Reader.registerEventListener('renderTextSelectionPopup', listener, ID);
     running = true;
     annotationObserverID = Zotero.Notifier.registerObserver({notify:onAnnotationChange}, ['item'], 'zotero-codex-regions');
-    Zotero.ZoteroCodex = { version: '0.5.1', dispatch, capture, annotationCard };
+    Zotero.ZoteroCodex = { version: '0.6.0', dispatch, capture, annotationCard,
+      settings: {state:settingsState, setCapturePreference, clearContext, saveConnectionSettings, connectionConfig, revealConnection, diagnose} };
+    preferencePaneID = await Zotero.PreferencePanes.register({
+      pluginID:ID, id:SETTINGS_ID, label:'Zotero MCP',
+      src:'chrome://zotero-codex/content/preferences.xhtml',
+      scripts:['chrome://zotero-codex/content/preferences.js'],
+      stylesheets:['chrome://zotero-codex/content/preferences.css'],
+      image:'chrome://zotero-codex/content/icon.svg',
+      helpURL:'https://github.com/renhao12356578/zotero-codex/blob/main/docs/local-setup.md',
+    });
   }
   async function stop() {
     running = false;
@@ -576,6 +661,8 @@ var ZoteroCodex = (() => {
     delete Zotero.Server.Endpoints[ENDPOINT];
     if (listener) Zotero.Reader.unregisterEventListener('renderTextSelectionPopup', listener);
     if (paneID) Zotero.ItemPaneManager.unregisterSection(paneID);
+    if (preferencePaneID) Zotero.PreferencePanes.unregister(preferencePaneID);
+    preferencePaneID = undefined;
     for (const win of windows.keys()) unloadWindow(win);
     snapshots.clear(); revisions.clear(); syncRevisions.clear(); writes.clear();
     if (connectionPath) await IOUtils.remove(connectionPath, {ignoreAbsent: true});
