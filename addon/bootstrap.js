@@ -14,6 +14,8 @@ async function startup({ rootURI }, reason) {
   pluginScope = { Zotero, Services, IOUtils, PathUtils, Components, rootURI };
   Services.scriptloader.loadSubScript(rootURI + 'content/core.js', pluginScope);
   Services.scriptloader.loadSubScript(rootURI + 'content/mcp-schema.js', pluginScope);
+  Services.scriptloader.loadSubScript(rootURI + 'content/runtime-core.js', pluginScope);
+  Services.scriptloader.loadSubScript(rootURI + 'content/runtime.js', pluginScope);
   Services.scriptloader.loadSubScript(rootURI + 'content/plugin.js', pluginScope);
   await pluginScope.ZoteroCodex.start();
 }

@@ -22,7 +22,7 @@ async function fixture(t) {
   PreferencePanes:{register:async options=>{registeredPane=options;return options.id;},unregister:id=>{removedPane=id;}},
   HTTP:{request:async(method,url)=>({status:method==='POST'?200:prefs.get('httpServer.localAPI.enabled')?200:403})},getMainWindows:()=>[],getMainWindow:()=>({Zotero_Tabs:{selectedID:'one'}}),
   ItemPaneManager:{registerSection:()=> 'panel',unregisterSection:()=>{}},logError:error=>{throw error;}};
- const scope=vm.createContext({Zotero,ZoteroCodexCore:Core,ZoteroMCPContract:contract,Services:{uuid:{generateUUID:()=>randomUUID()},wm:{getMostRecentWindow:()=>null}},IOUtils:{writeUTF8:async(p,s)=>files.set(p,s),setPermissions:async()=>{},remove:async p=>files.delete(p),exists:async p=>files.has(p),stat:async()=>({type:'regular'})},PathUtils:{join:(...s)=>s.join('/'),isAbsolute:p=>p.startsWith('/')}});
+ const scope=vm.createContext({ZoteroMCPRuntime:{start(){},stop(){},state(){return {};}},Zotero,ZoteroCodexCore:Core,ZoteroMCPContract:contract,Services:{uuid:{generateUUID:()=>randomUUID()},wm:{getMostRecentWindow:()=>null}},IOUtils:{writeUTF8:async(p,s)=>files.set(p,s),setPermissions:async()=>{},remove:async p=>files.delete(p),exists:async p=>files.has(p),stat:async()=>({type:'regular'})},PathUtils:{join:(...s)=>s.join('/'),isAbsolute:p=>p.startsWith('/')}});
  vm.runInContext(await readFile(new URL('../addon/content/plugin.js',import.meta.url),'utf8'),scope);
  await scope.ZoteroCodex.start();
  t.after(async()=>{await scope.ZoteroCodex.stop();pending.splice(0).forEach(resolve=>resolve());});

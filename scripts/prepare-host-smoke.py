@@ -13,6 +13,7 @@ with socket.socket() as port_socket:
     port_socket.bind(("127.0.0.1", 0))
     test_port = port_socket.getsockname()[1]
 prefs = {
+    "extensions.zotero-codex.autoInstall": False,
     "extensions.zotero-codex.mcpConnectionFile": str(base / 'connection.json'),
     "extensions.zotero.useDataDir": True,
     "extensions.zotero.dataDir": str(base / "data"),

@@ -14,3 +14,7 @@
 PDF page extraction and rendering directly use Mozilla PDF.js (`pdfjs-dist`, Apache-2.0) and `@napi-rs/canvas` (MIT), installed from npm with exact versions in `package-lock.json`. Their package license files are retained by npm.
 
 The Zotero XPI's Reader and Better Notes integration uses host APIs; it does not bundle Zotero or Better Notes source. Runtime dependencies are declared in `package.json`; transitive licenses are supplied in their installed packages.
+
+## Managed runtime packages
+
+Platform-specific runtime ZIPs bundle an unmodified Node.js executable. The matching Node.js license and bundled third-party notices are included as `NODE-LICENSE`. Production npm dependencies, including `toml-eslint-parser` (MIT), retain their package license files. The vendored Zotero native MCP license is also included in every runtime ZIP. No Zotero or Better Notes executable is redistributed.

@@ -1,0 +1,49 @@
+{
+  "version": "0.7.0",
+  "checks": [
+    {
+      "name": "checksum-mismatch-rejected-without-configuration",
+      "pass": true
+    },
+    {
+      "name": "retry-extracts-and-executes-bundled-node",
+      "pass": true
+    },
+    {
+      "name": "preparation-does-not-reconfigure-client",
+      "pass": true
+    },
+    {
+      "name": "one-click-connection-preserves-existing-config",
+      "pass": true
+    },
+    {
+      "name": "one-click-enables-native-api-and-sets-managed-paths",
+      "pass": true
+    },
+    {
+      "name": "configuration-backup-created",
+      "pass": true
+    },
+    {
+      "name": "already-installed-component-reused-without-network",
+      "pass": true
+    },
+    {
+      "name": "damaged-install-repaired-in-fresh-directory",
+      "pass": true
+    },
+    {
+      "name": "managed-configuration-follows-repair",
+      "pass": true
+    },
+    {
+      "name": "repair-directory-reused",
+      "pass": true
+    },
+    {
+      "name": "bridge-and-api-still-work",
+      "pass": true
+    }
+  ]
+}

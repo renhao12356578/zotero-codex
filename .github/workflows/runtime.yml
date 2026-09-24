@@ -1,0 +1,96 @@
+name: Runtime packages
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: darwin-arm64
+          - os: macos-15-intel
+            platform: darwin-x64
+          - os: windows-latest
+            platform: win32-x64
+          - os: ubuntu-22.04
+            platform: linux-x64
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Check target architecture
+        env:
+          RUNTIME_PLATFORM: ${{ matrix.platform }}
+        run: node -e "if (process.platform + '-' + process.arch !== process.env.RUNTIME_PLATFORM) process.exit(1)"
+      - run: npm test
+      - run: npm run build
+      - run: python scripts/build-runtime.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime-${{ matrix.platform }}
+          path: |
+            dist/*runtime*.zip
+            dist/runtime-*.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'linux-x64'
+        with:
+          name: plugin-xpi
+          path: dist/*.xpi
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Assemble manifest
+        run: |
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          version = json.loads(Path('package.json').read_text())['version']
+          manifest = {'schema':1,'version':version,'assets':{}}
+          for path in Path('dist').glob('runtime-*.json'):
+              part = json.loads(path.read_text())
+              assert part['version'] == version
+              for key, value in part['assets'].items():
+                  artifact = Path('dist') / value['name']
+                  assert artifact.stat().st_size == value['size']
+                  assert hashlib.file_digest(artifact.open('rb'),'sha256').hexdigest() == value['sha256']
+                  manifest['assets'][key] = value
+          assert len(manifest['assets']) == 5
+          Path('dist/runtime-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: complete-release
+          path: |
+            dist/*.xpi
+            dist/*.zip
+            dist/runtime-manifest.json
+      - name: Upload draft release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --notes-file docs/release-0.7.0.md
+          gh release upload "$GITHUB_REF_NAME" dist/*.xpi dist/*.zip dist/runtime-manifest.json --clobber

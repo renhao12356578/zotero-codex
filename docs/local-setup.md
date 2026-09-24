@@ -1,90 +1,52 @@
-# 安装与连接
+# 首次安装：只需 XPI
 
-需要 Zotero 10、Node.js 22.13 或更新版本，以及 Better Notes（已验证 3.3.3）。建议使用 Node.js 24 LTS。项目包含 Zotero XPI 和 Node MCP 服务，两个组件均需安装。
+适用于 Zotero 10、Codex 本地客户端。Better Notes 是笔记协作的可选依赖（已验证 3.3.3）。无需安装 Node.js、Git、Python，无需下载源码或打开终端。
 
-## 1. 准备服务
+## 1. 安装插件
 
-```sh
-git clone https://github.com/renhao12356578/zotero-codex.git
-cd zotero-codex
-npm ci
-npm run build
-```
+从 [最新 Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载 `zotero-codex-版本号.xpi`。只下载这个文件即可，其他压缩包供插件自动安装使用。
 
-保留这个目录。Codex 会从这里启动服务；无需手动常驻运行终端。不要只安装 XPI 后删除源码和 node_modules。
+Zotero → 工具 → 插件 → 齿轮 → 从文件安装插件，选择 XPI。若提示重启，重启 Zotero。
 
-## 2. 安装插件
+## 2. 等待组件自动准备
 
-Zotero → 工具 → 插件 → 齿轮菜单 → 从文件安装插件，选择 `dist/zotero-codex-0.6.1.xpi`。也可从 [Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载同版本 XPI。
+打开 Zotero → 设置 → Zotero MCP。插件启动后会检测当前系统与处理器，并自动从本项目对应版本的 GitHub Release 下载运行包。
 
-在 Zotero 高级设置开启“允许此计算机上的其他应用程序与 Zotero 通信”，并启用 Better Notes。插件启用后，Zotero profile 目录会生成 `zotero-codex-mcp.json`；它含有本机连接令牌，不要公开或上传。profile 是 Zotero 的配置目录，通常不同于存储论文和数据库的数据目录。
+界面显示下载进度、校验和安装状态。运行包包含独立 Node、MCP 服务与 PDF 依赖，不修改系统 Node，也不要求管理员权限。组件保存在 Zotero 配置目录下的 `zotero-codex-runtime`。首次需要网络；安装成功后再次启动直接检查、复用本地组件。
 
-profile 的常见父目录：
+下载失败时检查网络，然后点击「准备 / 重试」。关闭「自动下载和更新运行组件」可停止后续启动时的自动准备；已开始的操作继续完成。可以随时手动准备。
 
-- macOS：`~/Library/Application Support/Zotero/Profiles/`
-- Windows：`%APPDATA%\Zotero\Zotero\Profiles\`
-- Linux：`~/.zotero/zotero/`
+## 3. 点击「连接 Codex」
 
-选择正在使用的 profile，以其中生成的连接文件为准；不要复制到另一个位置，插件重启会更新令牌。
+这个按钮会自动完成：
 
-## 3. 添加 MCP
+- 开启 Zotero 高级设置中的本地 API。
+- 找到 Codex 用户配置（默认 `~/.codex/config.toml`，支持启动 Zotero 时继承的 `CODEX_HOME`）。
+- 备份已有配置，再创建或更新本插件的 `zotero` 连接。
+- 保留其他 MCP、模型设置，以及原 Zotero 连接的工具限制。
 
-在终端配置 Codex，替换下列三个绝对路径：
+重启 Codex。Zotero 保持打开，在 Codex 发送“检查 Zotero 连接状态”。随后可在 Zotero 打开论文，选择文字或创建区域批注，再问“解释我刚选择的内容”。
 
-```sh
-codex mcp add zotero -- /absolute/path/to/node /absolute/path/to/zotero-codex/mcp/server.mjs --connection-file '/absolute/path/to/profile/zotero-codex-mcp.json'
-```
+只需首次点击连接。后续由 Codex 自动启动本地 MCP 进程，不需要手动启动服务。插件本身不调用 AI，不需要向插件填写 OpenAI API Key 或 Zotero 云端 Key。
 
-已有同名 MCP 时更新已有配置，避免重复添加。也可在支持 stdio MCP 的客户端中填写：
+## 升级与已有用户
 
-```json
-{
-  "mcpServers": {
-    "zotero": {
-      "command": "/absolute/path/to/node",
-      "args": [
-        "/absolute/path/to/zotero-codex/mcp/server.mjs",
-        "--connection-file",
-        "/absolute/path/to/profile/zotero-codex-mcp.json"
-      ]
-    }
-  }
-}
-```
+更新 XPI 后，插件自动准备对应版本的组件。已由插件托管的 Codex 配置会随之更新，请重启 Codex。更新失败保留原包与配置；不会覆盖正在运行的程序。旧包暂时保留，以兼容尚未关闭的客户端。
 
-Windows JSON 路径中的反斜线需写为 `\\`。配置格式以客户端要求为准；上例为常见 stdio MCP 结构。
+以前手动部署源码的用户：点击一次「连接 Codex」即可迁移到托管组件。在新连接检查成功前请保留原来的源码部署。
 
-保持 Zotero 打开，重新加载客户端 MCP。首次原生 API 写入由 Zotero 弹窗请求授权；不需要 Zotero 云端 API key，也不需要向本项目填写 OpenAI API key。
+## 常见问题
 
-## 4. 检查连接
+- **无法获取运行包 / 下载失败**：检查是否能访问 GitHub Release；点击重试。插件不会偷偷改用不明镜像。刚更新插件时，运行包可能尚未发布。
+- **已准备但 Codex 仍没有工具**：点击「连接 Codex」后完全退出并重新打开 Codex。准备组件和配置客户端是两个状态，刷新按钮不负责启动服务。
+- **已有其他同名 zotero 服务**：插件不会覆盖不同服务。先在 Codex 中重命名那一项，再连接。项目级配置若覆盖了用户级配置，需要在对应项目中调整。
+- **Codex 配置语法错误 / 非标准内联写法**：不自动改坏文件，保留原样并提示；先修复设置。自动备份位于配置文件旁，文件名包含 `before-zotero`。
+- **笔记协作不可用**：确认 Better Notes 已启用；部分操作需要打开笔记编辑器。
+- **想连接其他客户端**：展开「高级连接配置 → 手动部署与其他客户端」。连接 Codex 后这里已有托管路径，可以复制通用 `mcpServers` JSON；格式以客户端要求为准。
+- **想自行部署 / 离线部署**：参考 [开发者手动部署](manual-setup.md)。
 
-```sh
-node scripts/mcp-smoke.mjs '/absolute/path/to/profile/zotero-codex-mcp.json'
-```
+连接文件 `zotero-codex-mcp.json` 含本机令牌，不要公开或移动；profile 是配置目录，通常不同于论文数据目录。设置里的「运行连接检查」只检查 Zotero 本地接口，不调用 AI，也不代表 Codex 已实际连接。「最近访问插件」也不是持续在线状态。
 
-不传隔离测试 base 时，此命令只检查握手、43 个工具、连接状态和当前上下文，不写文库。如果 status 未就绪：
+## 平台范围
 
-- API 无法连接：打开 Zotero，检查本地 API 开关及端口。默认端口为 23119。
-- 连接文件不存在：检查 XPI 已启用、Zotero 版本兼容，并确认选择的是正确 profile。
-- 笔记功能不可用：启用 Better Notes；某些操作需要先打开笔记编辑器。
-- 文件同步被拒绝：关闭该笔记的全部编辑器，必要时选中另一篇笔记，再重新查询同步状态。冲突需在 Better Notes 内解决。
-
-安装后可在客户端请求“检查 Zotero 连接状态”，再尝试搜索一篇论文或读取当前 PDF。
-
-## 插件设置
-
-Zotero → 设置 → 左侧「Zotero MCP」。阅读侧栏也有「打开 MCP 设置」按钮。
-
-- **连接状态**：分别显示插件桥接是否就绪、原生 API 开关、Better Notes、最近访问插件的时间与识别到的 Node 服务版本。客户端访问插件的时间不等于持续在线；纯原生 API 工具调用不会更新这个时间。
-- **阅读上下文**：文字与区域自动捕获默认开启，开关持久保存在本机，立即生效。关闭某项会清除该类型的自动快照；手动添加和拖入批注仍可用。清除上下文会清除所有阅读器的 MCP 快照及待生成截图，不删除已保存批注、笔记或客户端已有对话。
-- **连接配置**：0.6.1 Node 服务访问插件后可识别 Node 和脚本路径；首次安装或旧服务需手动填写。复制的是通用 `mcpServers` JSON，包含连接文件路径但不含令牌。Codex CLI 配置命令仍见上文，修改本页路径不会自动重写客户端配置。
-- **诊断**：检查本机桥接、原生 API 和连接文件，不验证 Codex 的配置，也不请求 AI。复制的报告不含令牌、绝对路径、论文标题或笔记内容。
-- **版本与更新**：打开 GitHub Release；实际 XPI 更新仍由 Zotero 插件管理器执行。
-
-## 更新
-
-插件通过本仓库的 `updates.json` 获取 XPI 更新信息。更新时也要更新对应版本的 Node 服务：下载相同 Release 的源码，运行 `npm ci` 和 `npm run build`，再重新加载 MCP。不同版本混用可能导致工具清单与宿主功能不一致。
-
-## 平台验证范围
-
-真实 Zotero 宿主目前在 macOS 验证。Windows/Linux 的安装路径可参考上文，但图形宿主与拖拽操作尚未完成验收。测试证据见 [全流程报告](fullflow-test-report.md)。
+提供 macOS Apple Silicon / Intel、Windows x64、Linux x64 / arm64 运行包。Windows arm64 原生 Zotero 暂不自动安装，界面会明确提示。真实 Zotero 安装流程在 macOS 验证；其他平台在 CI 验证运行包和服务依赖，图形宿主交互仍需进一步验收。

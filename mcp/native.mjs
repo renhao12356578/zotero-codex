@@ -38,7 +38,7 @@ export async function createNativeBridge(overrides = {}) {
   registerItemTools(server, host);
   registerAttachmentTools(server, host);
   registerDiscoveryTools(server, host);
-  const client = new Client({ name: 'zotero-codex-native-adapter', version: '0.6.1' });
+  const client = new Client({ name: 'zotero-codex-native-adapter', version: '0.7.0' });
   const [a, b] = InMemoryTransport.createLinkedPair();
   await server.connect(a);
   await client.connect(b);

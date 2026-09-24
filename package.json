@@ -1,6 +1,6 @@
 {
   "name": "zotero-codex",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "description": "Zotero reading and Better Notes companion for Codex",
   "engines": {
@@ -19,6 +19,7 @@
     "@modelcontextprotocol/sdk": "1.27.1",
     "@napi-rs/canvas": "1.0.9",
     "pdfjs-dist": "6.3.289",
+    "toml-eslint-parser": "1.0.3",
     "zod": "3.25.76"
   },
   "devDependencies": {

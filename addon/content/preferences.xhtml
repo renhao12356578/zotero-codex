@@ -1,6 +1,16 @@
 <vbox id="zc-settings" onload="Zotero_Preferences.getScope('zotero-codex-preferences').ZoteroMCPPreferences.init()" onshowing="Zotero_Preferences.getScope('zotero-codex-preferences').ZoteroMCPPreferences.refresh()">
   <html:p class="zc-intro">让 Codex 与论文阅读、选区和 Better Notes 笔记协作。</html:p>
   <groupbox class="zc-group">
+    <label><html:h2>安装与连接</html:h2></label>
+    <html:p id="zc-runtime-status" role="status" aria-live="polite">正在检查运行组件…</html:p>
+    <hbox class="zc-actions" align="center">
+      <html:button id="zc-connect" type="button">连接 Codex</html:button>
+      <html:button id="zc-install" type="button">准备 / 重试</html:button>
+    </hbox>
+    <html:label class="zc-toggle"><html:input id="zc-auto-install" type="checkbox"/>自动下载和更新运行组件</html:label>
+    <html:p class="zc-muted">组件来自本项目 GitHub Release，包含所需运行环境。首次准备完成后点击「连接 Codex」，再重启 Codex 即可使用；无需安装 Node.js、下载源码或填写路径。连接时会开启 Zotero 本地 API，并备份、更新 Codex 的 Zotero 配置。</html:p>
+  </groupbox>
+  <groupbox class="zc-group">
     <label><html:h2>连接状态</html:h2></label>
     <html:dl class="zc-status">
       <html:dt>插件版本</html:dt><html:dd id="zc-version"/>
@@ -28,8 +38,9 @@
     <html:p class="zc-muted">清除所有阅读器的 MCP 选区快照；已保存的批注和笔记不受影响。</html:p>
   </groupbox>
   <groupbox class="zc-group">
-    <label><html:h2>连接配置</html:h2></label>
-    <html:p class="zc-muted">客户端访问插件后会自动识别服务路径。首次连接可手动填写，路径会保存在本机。</html:p>
+    <label><html:h2>高级连接配置</html:h2></label>
+    <html:details><html:summary>手动部署与其他客户端</html:summary>
+    <html:p class="zc-muted">使用上方「连接 Codex」无需填写以下内容。其他客户端或自行部署服务时，可在这里指定路径。</html:p>
     <html:label class="zc-field" for="zc-node-path">Node.js 可执行文件</html:label>
     <html:input class="zc-path" id="zc-node-path" type="text" placeholder="node 或 Node.js 的完整路径" spellcheck="false"/>
     <html:label class="zc-field" for="zc-server-path">MCP 服务脚本</html:label>
@@ -41,6 +52,7 @@
       <html:button id="zc-help" type="button">安装说明</html:button>
     </hbox>
     <html:p class="zc-muted">连接文件含本机访问令牌，请勿公开分享。</html:p>
+    </html:details>
   </groupbox>
   <groupbox class="zc-group">
     <label><html:h2>诊断与关于</html:h2></label>

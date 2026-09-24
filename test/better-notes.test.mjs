@@ -35,7 +35,7 @@ async function fixture() {
     Utilities:{Internal:{md5:hash}},Prefs:{get:()=>'/connection.json'},Server:{init:async()=>{},Endpoints:{},port:23119},
     getMainWindows:()=>[],ItemPaneManager:{registerSection:()=> 'section',unregisterSection:()=>{}},Reader:{registerEventListener:()=>{},unregisterEventListener:()=>{}}};
   const IOUtils={writeUTF8:async(p,s)=>{files.set(p,s);},setPermissions:async()=>{},remove:async()=>{},exists:async p=>files.has(p),readUTF8:async p=>files.get(p),stat:async p=>({type:p==='/notes'?'directory':'regular',size:files.get(p)?.length||0})};
-  const scope=vm.createContext({Zotero,ZoteroCodexCore:Core,ZoteroMCPContract:contract,Services:{uuid:{generateUUID:()=>randomUUID()}},PathUtils:{join:(...s)=>s.join('/')},IOUtils,Components:{utils:{waiveXrays:x=>x}}});
+  const scope=vm.createContext({ZoteroMCPRuntime:{start(){},stop(){},state(){return {};}},Zotero,ZoteroCodexCore:Core,ZoteroMCPContract:contract,Services:{uuid:{generateUUID:()=>randomUUID()}},PathUtils:{join:(...s)=>s.join('/')},IOUtils,Components:{utils:{waiveXrays:x=>x}}});
   vm.runInContext(await readFile(new URL('../addon/content/plugin.js',import.meta.url),'utf8'),scope);
   await scope.ZoteroCodex.start();
   const ref={libraryID:1,key:'NOTE0001'};

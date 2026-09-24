@@ -1,4 +1,4 @@
-# Zotero Codex MCP 0.6.1
+# Zotero Codex MCP 0.7.0
 
 在 Zotero 看论文、写 Better Notes，在 Codex 中直接读 PDF、讨论选区、编辑笔记。
 
@@ -18,7 +18,7 @@
 
 合并依据、工具迁移和取舍见 [docs/tool-consolidation.md](docs/tool-consolidation.md)。旧 `zotero_library_*` 名称不再暴露；搜索使用 `q`，条目读取使用 `itemKey`，不再使用旧版 `query`/`item` 参数。
 
-0.6.1 新增 Zotero 原生设置页：在「设置 → Zotero MCP」查看连接状态、控制自动捕获、复制连接配置和运行脱敏诊断。0.5.1 起支持区域截图自动捕获，无需拖入侧栏。
+0.7.0 支持自动安装完整运行组件和一键连接 Codex，普通用户无需 Node.js、源码或终端。Zotero 原生设置页：在「设置 → Zotero MCP」查看连接状态、控制自动捕获、复制连接配置和运行脱敏诊断。0.5.1 起支持区域截图自动捕获，无需拖入侧栏。
 
 ## 可以做什么
 
@@ -48,30 +48,17 @@
 
 ## 安装和接入
 
-需要 Zotero 10、Node.js（具体最低版本见 package.json）；实时笔记编辑需要 Better Notes，已验证版本 3.3.3。
+需要 Zotero 10 和支持本地 MCP 的 Codex 客户端；实时笔记协作需要 Better Notes（已验证 3.3.3）。
 
-1. 克隆源码并安装服务依赖（或下载 Release 对应的源码压缩包）：
+1. 从 [Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载 XPI，在 Zotero「工具 → 插件 → 从文件安装插件」安装。
+2. 打开「设置 → Zotero MCP」，插件会自动下载并检查运行组件。准备好后点击「连接 Codex」。
+3. 重启 Codex，保持 Zotero 打开，发送“检查 Zotero 连接状态”。
 
-   ```sh
-   git clone https://github.com/renhao12356578/zotero-codex.git
-   cd zotero-codex
-   npm ci
-   npm run build
-   ```
-2. Zotero → 工具 → 插件 → 齿轮 → 从文件安装，选择 `dist/zotero-codex-0.6.1.xpi`。
-3. 添加 MCP，路径替换为本机绝对路径：
+不需要单独安装 Node.js、下载源码、运行 npm 或填写路径。运行包包含 Node、编译后的 MCP 服务、PDF 原生依赖；存放于 Zotero profile 的 `zotero-codex-runtime` 中。首次下载需要网络，之后直接复用。Codex 按 stdio 配置自动启动服务，不需要终端常驻。
 
-```sh
-codex mcp add zotero -- /absolute/path/to/node /absolute/path/to/zotero-codex/mcp/server.mjs --connection-file '/absolute/path/to/Zotero/profile/zotero-codex-mcp.json'
-```
+连接按钮会开启 Zotero 本地 API，并备份、更新 Codex 用户配置中的 `zotero` 连接；其他模型、MCP 和工具权限保留。此前手动配置过本项目的用户也可点击该按钮迁移。下载或校验失败不会替换可用的旧运行包，设置里可以重试或关闭自动准备。升级后已托管的 Codex 连接会指向经过验证的新版本，需要重启 Codex 生效。
 
-4. 保持 Zotero 打开，重新加载 Codex MCP 或重启 Codex。已有 `zotero` 配置指向本项目时不用重复添加。
-
-上游文库工具默认连接 `http://127.0.0.1:23119`，需要在 Zotero 高级设置启用“允许此计算机上的其他应用程序与 Zotero 通信”。首次原生 API 写入沿用 Zotero 自身的授权弹窗，可以授予单次或持久访问；使用的是本机 API key，不是云端 key。可通过 `ZOTERO_LOCAL_PORT` / `ZOTERO_LOCAL_BASE_URL` 指定本机地址。原生工具读取和 PDF 按页读取无需 XPI；实时选区和笔记编辑需要 XPI。
-
-XPI 启用后在 profile 生成权限为 0600 的连接文件，令牌随插件启动刷新。Codex 自动启动 Node 服务，不需要自己常驻运行终端。
-
-安装和排查步骤见 [docs/local-setup.md](docs/local-setup.md)。Release 中的 XPI 只包含 Zotero 端插件；Node MCP 服务仍需保留上述源码目录和依赖。
+[详细安装与故障排查](docs/local-setup.md) · [开发者手动部署](docs/manual-setup.md)
 
 ## 笔记编辑如何工作
 

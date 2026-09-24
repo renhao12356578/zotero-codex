@@ -25,6 +25,15 @@ var ZoteroMCPPreferences = {
     for (const id of ['node-path','server-path']) this.el(id).addEventListener('change', () => {
       try { this.savePaths(); this.feedback('路径已保存在本机'); } catch (error) { this.feedback(error.message); }
     });
+    this.el('auto-install').addEventListener('change', () => {
+      this.api.runtime.setAutomatic(this.el('auto-install').checked); this.refresh();
+    });
+    this.bind('install', async () => { await this.api.runtime.ensure(); this.refresh(true); });
+    this.bind('connect', async () => {
+      await this.api.runtime.connect(); this.refresh(true); this.feedback('配置已保存，请重启 Codex');
+    });
+    this.runtimeTimer = window.setInterval(() => this.refreshRuntime(), 500);
+    window.addEventListener('unload', () => window.clearInterval(this.runtimeTimer), {once:true});
     this.bind('refresh', () => { this.refresh(); this.feedback('状态已刷新'); });
     this.bind('clear', () => { this.api.clearContext(); this.refresh(); this.feedback('已清除所有阅读器的 MCP 选区快照'); });
     this.bind('copy-config', async () => {
@@ -45,9 +54,18 @@ var ZoteroMCPPreferences = {
     }
     this.refresh(true);
   },
+  refreshRuntime() {
+    try {
+      const state = this.api.runtime.state();
+      // Avoid repeatedly announcing an unchanged status to screen readers.
+      if (this.el('runtime-status').textContent !== state.message) this.el('runtime-status').textContent = state.message;
+      this.el('auto-install').checked = state.automatic;
+    } catch { /* Pane can outlive a disabled plugin. */ }
+  },
   savePaths() { this.api.saveConnectionSettings(this.el('node-path').value, this.el('server-path').value); },
   refresh(fillPaths = false) {
     if (!this.initialized) return;
+    this.refreshRuntime();
     try {
       const state = this.api.state();
       const values = {
