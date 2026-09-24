@@ -5,7 +5,7 @@ import json
 
 root = Path(__file__).resolve().parents[1]
 addon = root / "addon"
-manifest = json.loads((addon / "manifest.json").read_text())
+manifest = json.loads((addon / "manifest.json").read_text(encoding='utf-8'))
 assert manifest["applications"]["zotero"].get("update_url"), "Zotero requires applications.zotero.update_url, even for development builds"
 target = root / "dist" / f"zotero-codex-{manifest['version']}.xpi"
 target.parent.mkdir(exist_ok=True)

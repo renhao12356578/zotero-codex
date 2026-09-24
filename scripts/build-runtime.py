@@ -6,7 +6,7 @@ root = Path(__file__).resolve().parents[1]
 node = json.loads(subprocess.check_output(['node', '-p', 'JSON.stringify({path:process.execPath,platform:process.platform,arch:process.arch,version:process.versions.node})'], text=True))
 if int(node['version'].split('.')[0]) < 24:
     raise SystemExit('Build with Node.js 24 LTS or newer')
-version = json.loads((root / 'package.json').read_text())['version']
+version = json.loads((root / 'package.json').read_text(encoding='utf-8'))['version']
 key = f"{node['platform']}-{node['arch']}"
 dist = root / 'dist'
 dist.mkdir(exist_ok=True)
