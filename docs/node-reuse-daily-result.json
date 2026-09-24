@@ -1,0 +1,37 @@
+{
+  "version": "0.8.0",
+  "checks": [
+    {
+      "name": "codex-reuses-nvm-node-25.8.1",
+      "pass": true
+    },
+    {
+      "name": "other-codex-settings-preserved",
+      "pass": true
+    },
+    {
+      "name": "service-install-has-no-bundled-node",
+      "pass": true
+    },
+    {
+      "name": "previous-private-node-kept-for-fallback",
+      "pass": true
+    },
+    {
+      "name": "installed-xpi-matches-published-xpi",
+      "pass": true
+    },
+    {
+      "name": "managed-service-exposes-43-tools",
+      "pass": true
+    },
+    {
+      "name": "plugin-and-service-ready-on-0.8.0",
+      "pass": true
+    },
+    {
+      "name": "live-reader-context",
+      "pass": true
+    }
+  ]
+}

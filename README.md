@@ -108,6 +108,8 @@ edit_note(note, revision, requestID,
 
 ## 验证
 
+0.8.0 本机 Node 复用：53 项测试在五个平台通过，另通过 Node 22.13.1 兼容性测试；真实 Zotero 完成 14 项宿主检查、3 项 stdio 检查，以及正式 Release 更新后的 8 项日常只读检查。本机成功复用 nvm Node 25.8.1，只下载服务包，保留专用 Node 回退和其他 Codex 设置。见 [本机 Node 复用验证报告](docs/node-reuse-installation-report.md)。
+
 0.7.0 安装流程：49 项单元测试在五个平台通过；真实 Zotero 完成 11 项安装/修复检查、3 项托管服务 stdio 检查。本机从公开 Release 自动下载、连接并读取文库的 5 项只读检查通过。见 [自动安装验证报告](docs/runtime-installation-report.md)。
 
 2026-09-22 在 macOS arm64、Zotero 10.0.3、Better Notes 3.3.3 上完成全流程回归。43/43 个工具均经过真实 MCP SDK stdio 调用；118 项宿主/端到端检查及 4 项退出后持久化与安装包检查通过。完整结果与复现步骤见 [全流程测试报告](docs/fullflow-test-report.md)。
