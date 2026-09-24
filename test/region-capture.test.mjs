@@ -90,9 +90,9 @@ test('settings distinguish authenticated client activity, redact diagnostics and
  assert.equal(settings.state().lastRequestAt,null);
  await f.request({name:'zotero_status',arguments:{}},false);assert.equal(settings.state().lastRequestAt,null);
  await f.request({name:'zotero_status',arguments:{},source:'preferences-diagnostic'});assert.equal(settings.state().lastRequestAt,null);
- const client={version:'0.6.0',nodePath:'/private/node',serverPath:'/private/project/mcp/server.mjs'};
+ const client={version:'0.6.1',nodePath:'/private/node',serverPath:'/private/project/mcp/server.mjs'};
  await f.request({name:'zotero_status',arguments:{},client});
- assert.ok(settings.state().lastRequestAt);assert.equal(settings.state().serverVersion,'0.6.0');
+ assert.ok(settings.state().lastRequestAt);assert.equal(settings.state().serverVersion,'0.6.1');
  const at=settings.state().lastRequestAt;f.files.set(client.nodePath,'node');f.files.set(client.serverPath,'server');
  const config=JSON.parse(await settings.connectionConfig());assert.equal(config.mcpServers.zotero.command,client.nodePath);
  assert.deepEqual(config.mcpServers.zotero.args,[client.serverPath,'--connection-file','/private/profile/connection.json']);

@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 const base=resolve(process.argv[2]||'');
 if(!basename(base).startsWith('zotero-codex-host-'))throw new Error('Requires isolated fixture');
 const fixture=JSON.parse(await readFile(base+'/region-fixtures.json'));
-const client=new Client({name:'region-smoke',version:'0.6.0'});
+const client=new Client({name:'region-smoke',version:'0.6.1'});
 await client.connect(new StdioClientTransport({command:process.execPath,args:[fileURLToPath(new URL('../mcp/server.mjs',import.meta.url)),'--connection-file',base+'/connection.json'],stderr:'pipe'}));
 try{
  const result=await client.callTool({name:'zotero_get_selection',arguments:{readerID:fixture.readerID}});

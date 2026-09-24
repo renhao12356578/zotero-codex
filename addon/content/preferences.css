@@ -1,17 +1,69 @@
-#zc-settings { max-width: 820px; }
-#zc-settings .main-section { padding-bottom: 20px; }
-#zc-settings h2 { margin: 0 0 14px; font-size: 1.15em; }
-#zc-settings p { line-height: 1.6; margin: 10px 0; }
-#zc-settings .zc-muted { color: var(--fill-secondary, #666); font-size: 0.94em; }
-#zc-settings .zc-status { display: grid; grid-template-columns: minmax(120px, 150px) 1fr; gap: 12px 20px; margin: 16px 0; }
+#zc-settings {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 820px;
+  padding: 0 4px 24px;
+}
+
+#zc-settings .zc-intro,
+#zc-settings .zc-muted {
+  color: var(--fill-secondary, #666);
+  font-size: 0.94em;
+  line-height: 1.55;
+}
+
+#zc-settings .zc-intro { margin: 0 0 18px; }
+#zc-settings .zc-group {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 18px;
+  padding: 12px 14px 14px;
+}
+#zc-settings .zc-group > label { margin: 0 0 10px; }
+#zc-settings h2 { margin: 0; font-size: 1.15em; font-weight: 600; }
+#zc-settings p { line-height: 1.55; margin: 10px 0; }
+
+#zc-settings .zc-status {
+  display: grid;
+  grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
+  gap: 9px 18px;
+  margin: 8px 0 12px;
+}
 #zc-settings dt { color: var(--fill-secondary, #666); }
-#zc-settings dd { margin: 0; overflow-wrap: anywhere; }
-#zc-settings .zc-toggle { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
-#zc-settings .zc-toggle input { margin: 0; }
-#zc-settings .zc-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
-#zc-settings button { font: inherit; padding: 5px 12px; border-radius: 6px; }
-#zc-settings .zc-field { display: block; margin: 14px 0 7px; }
-#zc-settings .zc-path { box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 7px 10px; border-radius: 6px; font: inherit; }
-#zc-settings #zc-feedback { position: sticky; bottom: 0; margin: 0; padding: 10px 0; background: var(--material-background, Canvas); }
-#zc-settings #zc-feedback:empty { display: none; }
-@media (max-width: 620px) { #zc-settings .zc-status { grid-template-columns: 120px 1fr; gap: 10px; } }
+#zc-settings dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+
+#zc-settings .zc-actions {
+  display: -moz-box;
+  -moz-box-align: center;
+  margin: 10px 0 2px;
+}
+#zc-settings .zc-actions > * { margin-inline-end: 8px; }
+#zc-settings .zc-actions > *:last-child { margin-inline-end: 0; }
+#zc-settings button { font: inherit; }
+#zc-settings .zc-inline-feedback {
+  color: var(--fill-secondary, #666);
+  font-size: 0.94em;
+  white-space: nowrap;
+}
+#zc-settings .zc-toggle {
+  display: block;
+  margin: 9px 0;
+}
+#zc-settings .zc-toggle input { margin: 0 8px 0 0; vertical-align: -1px; }
+#zc-settings .zc-field { display: block; margin: 12px 0 6px; }
+#zc-settings .zc-path {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 9px;
+  border-radius: 5px;
+  font: inherit;
+}
+#zc-settings #zc-diagnostics { margin-top: 12px; }
+
+@media (max-width: 620px) {
+  #zc-settings .zc-status { grid-template-columns: 112px minmax(0, 1fr); gap: 8px 12px; }
+  #zc-settings .zc-inline-feedback { white-space: normal; }
+}

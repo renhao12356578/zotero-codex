@@ -1,4 +1,4 @@
-# Zotero Codex MCP 0.6.0
+# Zotero Codex MCP 0.6.1
 
 在 Zotero 看论文、写 Better Notes，在 Codex 中直接读 PDF、讨论选区、编辑笔记。
 
@@ -18,7 +18,7 @@
 
 合并依据、工具迁移和取舍见 [docs/tool-consolidation.md](docs/tool-consolidation.md)。旧 `zotero_library_*` 名称不再暴露；搜索使用 `q`，条目读取使用 `itemKey`，不再使用旧版 `query`/`item` 参数。
 
-0.6.0 新增 Zotero 原生设置页：在「设置 → Zotero MCP」查看连接状态、控制自动捕获、复制连接配置和运行脱敏诊断。0.5.1 起支持区域截图自动捕获，无需拖入侧栏。
+0.6.1 新增 Zotero 原生设置页：在「设置 → Zotero MCP」查看连接状态、控制自动捕获、复制连接配置和运行脱敏诊断。0.5.1 起支持区域截图自动捕获，无需拖入侧栏。
 
 ## 可以做什么
 
@@ -58,7 +58,7 @@
    npm ci
    npm run build
    ```
-2. Zotero → 工具 → 插件 → 齿轮 → 从文件安装，选择 `dist/zotero-codex-0.6.0.xpi`。
+2. Zotero → 工具 → 插件 → 齿轮 → 从文件安装，选择 `dist/zotero-codex-0.6.1.xpi`。
 3. 添加 MCP，路径替换为本机绝对路径：
 
 ```sh

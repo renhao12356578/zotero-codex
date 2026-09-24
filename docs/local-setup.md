@@ -15,7 +15,7 @@ npm run build
 
 ## 2. 安装插件
 
-Zotero → 工具 → 插件 → 齿轮菜单 → 从文件安装插件，选择 `dist/zotero-codex-0.6.0.xpi`。也可从 [Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载同版本 XPI。
+Zotero → 工具 → 插件 → 齿轮菜单 → 从文件安装插件，选择 `dist/zotero-codex-0.6.1.xpi`。也可从 [Release](https://github.com/renhao12356578/zotero-codex/releases/latest) 下载同版本 XPI。
 
 在 Zotero 高级设置开启“允许此计算机上的其他应用程序与 Zotero 通信”，并启用 Better Notes。插件启用后，Zotero profile 目录会生成 `zotero-codex-mcp.json`；它含有本机连接令牌，不要公开或上传。profile 是 Zotero 的配置目录，通常不同于存储论文和数据库的数据目录。
 
@@ -77,7 +77,7 @@ Zotero → 设置 → 左侧「Zotero MCP」。阅读侧栏也有「打开 MCP �
 
 - **连接状态**：分别显示插件桥接是否就绪、原生 API 开关、Better Notes、最近访问插件的时间与识别到的 Node 服务版本。客户端访问插件的时间不等于持续在线；纯原生 API 工具调用不会更新这个时间。
 - **阅读上下文**：文字与区域自动捕获默认开启，开关持久保存在本机，立即生效。关闭某项会清除该类型的自动快照；手动添加和拖入批注仍可用。清除上下文会清除所有阅读器的 MCP 快照及待生成截图，不删除已保存批注、笔记或客户端已有对话。
-- **连接配置**：0.6.0 Node 服务访问插件后可识别 Node 和脚本路径；首次安装或旧服务需手动填写。复制的是通用 `mcpServers` JSON，包含连接文件路径但不含令牌。Codex CLI 配置命令仍见上文，修改本页路径不会自动重写客户端配置。
+- **连接配置**：0.6.1 Node 服务访问插件后可识别 Node 和脚本路径；首次安装或旧服务需手动填写。复制的是通用 `mcpServers` JSON，包含连接文件路径但不含令牌。Codex CLI 配置命令仍见上文，修改本页路径不会自动重写客户端配置。
 - **诊断**：检查本机桥接、原生 API 和连接文件，不验证 Codex 的配置，也不请求 AI。复制的报告不含令牌、绝对路径、论文标题或笔记内容。
 - **版本与更新**：打开 GitHub Release；实际 XPI 更新仍由 Zotero 插件管理器执行。
 
