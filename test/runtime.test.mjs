@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile,readdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,win32,posix} from 'node:path';
 import Core from '../addon/content/runtime-core.js';
 import {configureText,configureFile} from '../runtime/configure.mjs';
 import {parseForESLint,getStaticTOMLValue} from 'toml-eslint-parser';
@@ -13,6 +13,21 @@ test('platform matching is explicit, unsupported platforms fail before downloadi
   assert.equal(Core.platform('Darwin','aarch64-gcc3'),'darwin-arm64');
   assert.equal(Core.platform('WINNT','x86_64-msvc'),'win32-x64');
   assert.throws(()=>Core.platform('WINNT','aarch64-msvc'),/暂不支持/);
+});
+test('system Node version check matches actual dependency engines',()=>{
+  for(const v of ['22.13.0','22.22.0','24.0.0','25.8.1']) assert.equal(Core.compatibleNode(v),true,v);
+  for(const v of ['18.20.0','20.19.0','22.12.0','23.5.0','24.0.0-rc.1','not-node','']) assert.equal(Core.compatibleNode(v),false,v);
+});
+test('GUI discovery covers absolute PATH, Homebrew, Volta and Windows Node installers',()=>{
+  const unix=Core.candidates('Darwin',{PATH:'./bin::/custom/bin:/custom/bin',VOLTA_HOME:'/home/a/.volta'},'/home/a',posix.join);
+  assert.equal(unix.filter(p=>p==='/custom/bin/node').length,1);assert.ok(unix.includes('/opt/homebrew/bin/node'));assert.ok(unix.includes('/home/a/.volta/bin/node'));assert.ok(unix.every(p=>p.startsWith('/')));
+  const windows=Core.candidates('WINNT',{PATH:'bin;"C:\\Node Tools";C:\\Node Tools',ProgramFiles:'C:\\Program Files',NVM_SYMLINK:'C:\\nvm-node'},'C:\\Users\\test',win32.join);
+  assert.ok(windows.includes('C:\\Program Files\\nodejs\\node.exe'));assert.ok(windows.includes('C:\\nvm-node\\node.exe'));assert.equal(windows.filter(p=>p==='C:\\Node Tools\\node.exe').length,1);assert.ok(windows.every(win32.isAbsolute));
+});
+test('service-only assets remain pinned and cannot silently select a full package',()=>{
+  const manifest={schema:1,version:'0.8.0',services:{'darwin-arm64':{name:'zotero-codex-service-0.8.0-darwin-arm64.zip',size:10,sha256:'a'.repeat(64)}}};
+  assert.match(Core.asset(manifest,'0.8.0','darwin-arm64','service').url,/service-0.8.0/);
+  assert.throws(()=>Core.asset(manifest,'0.8.0','darwin-arm64','full'));
 });
 test('manifest pins version, repository, platform, size and SHA256',()=>{
   const name='zotero-codex-runtime-0.7.0-darwin-arm64.zip';
@@ -43,6 +58,14 @@ test('automatic upgrade touches only this managed profile and preserves disabled
   const old=configureText('',{...options,node:join(root,'old','node'),server:join(root,'old','mcp','server.mjs')}).text.replace('enabled = true','enabled = false');
   const result=configureText(old,{...options,mode:'update'});assert.equal(result.configured,true);assert.equal(parse(result.text).mcp_servers.zotero.enabled,false);
   assert.equal(configureText(old,{...options,connection:join(tmpdir(),'another-profile.json'),mode:'update'}).changed,false);
+});
+test('managed service remains owned when switching between system and bundled Node',()=>{
+  const external=join(tmpdir(),'system-node','node');
+  const initial=configureText('',{...options,node:external}).text;
+  const fallback=configureText(initial,{...options,mode:'update'});
+  assert.equal(fallback.configured,true);assert.equal(parse(fallback.text).mcp_servers.zotero.command,options.node);
+  const reuse=configureText(fallback.text,{...options,node:external,mode:'update'});
+  assert.equal(reuse.configured,true);assert.equal(parse(reuse.text).mcp_servers.zotero.command,external);
 });
 test('malformed config, inline tables and unrelated names are left intact',()=>{
   assert.throws(()=>configureText('broken="',options),/格式/);

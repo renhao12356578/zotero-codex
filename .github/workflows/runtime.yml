@@ -43,7 +43,7 @@ jobs:
         with:
           name: runtime-${{ matrix.platform }}
           path: |
-            dist/*runtime*.zip
+            dist/*.zip
             dist/runtime-*.json
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
@@ -51,8 +51,17 @@ jobs:
         with:
           name: plugin-xpi
           path: dist/*.xpi
+  node22:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.1'
+      - run: npm ci
+      - run: npm test
   release:
-    needs: package
+    needs: [package, node22]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -68,16 +77,17 @@ jobs:
           import hashlib, json
           from pathlib import Path
           version = json.loads(Path('package.json').read_text())['version']
-          manifest = {'schema':1,'version':version,'assets':{}}
+          manifest = {'schema':1,'version':version,'assets':{},'services':{}}
           for path in Path('dist').glob('runtime-*.json'):
               part = json.loads(path.read_text())
               assert part['version'] == version
-              for key, value in part['assets'].items():
-                  artifact = Path('dist') / value['name']
-                  assert artifact.stat().st_size == value['size']
-                  assert hashlib.file_digest(artifact.open('rb'),'sha256').hexdigest() == value['sha256']
-                  manifest['assets'][key] = value
-          assert len(manifest['assets']) == 5
+              for group in ['assets','services']:
+                  for key, value in part[group].items():
+                      artifact = Path('dist') / value['name']
+                      assert artifact.stat().st_size == value['size']
+                      assert hashlib.file_digest(artifact.open('rb'),'sha256').hexdigest() == value['sha256']
+                      manifest[group][key] = value
+          assert len(manifest['assets']) == len(manifest['services']) == 5
           Path('dist/runtime-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
           PY
       - uses: actions/upload-artifact@v4
@@ -88,9 +98,14 @@ jobs:
             dist/*.zip
             dist/runtime-manifest.json
       - name: Upload draft release
-        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --notes-file docs/release-0.7.0.md
-          gh release upload "$GITHUB_REF_NAME" dist/*.xpi dist/*.zip dist/runtime-manifest.json --clobber
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            test "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true
+          else
+            gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "$TAG" --notes-file "docs/release-$VERSION.md"
+          fi
+          gh release upload "$TAG" dist/*.xpi dist/*.zip dist/runtime-manifest.json --clobber

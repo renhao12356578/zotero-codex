@@ -16,7 +16,9 @@ export function configureText(text, {node, server, connection, root, mode = 'con
   if (![node, server, connection, root].every(p => typeof p === 'string' && isAbsolute(p) && !/[\r\n\0]/.test(p))) throw new Error('安装路径无效');
   const {ast, data} = parse(text);
   const existing = data.mcp_servers?.zotero;
-  const managed = existing && inside(root, existing.command || '') && inside(root, existing.args?.[0] || '') && existing.args?.[1] === '--connection-file' && existing.args?.[2] === connection;
+  // Ownership follows our managed service and profile, not the Node executable:
+  // compatible system Node installations deliberately live outside this root.
+  const managed = existing && !existing.url && inside(root, existing.args?.[0] || '') && existing.args?.[1] === '--connection-file' && existing.args?.[2] === connection;
   if (mode === 'update' && !managed) return {text, changed:false, configured:false};
   // Never silently take over a different service using the same name.
   if (existing && !managed && (existing.url || !existing.args?.[0]?.replaceAll('\\', '/').endsWith('/mcp/server.mjs') || existing.args?.[1] !== '--connection-file' || existing.args?.[2] !== connection)) {

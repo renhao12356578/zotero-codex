@@ -1,4 +1,4 @@
-# Zotero Codex MCP 0.7.0
+# Zotero Codex MCP 0.8.0
 
 在 Zotero 看论文、写 Better Notes，在 Codex 中直接读 PDF、讨论选区、编辑笔记。
 
@@ -18,7 +18,7 @@
 
 合并依据、工具迁移和取舍见 [docs/tool-consolidation.md](docs/tool-consolidation.md)。旧 `zotero_library_*` 名称不再暴露；搜索使用 `q`，条目读取使用 `itemKey`，不再使用旧版 `query`/`item` 参数。
 
-0.7.0 支持自动安装完整运行组件和一键连接 Codex，普通用户无需 Node.js、源码或终端。Zotero 原生设置页：在「设置 → Zotero MCP」查看连接状态、控制自动捕获、复制连接配置和运行脱敏诊断。0.5.1 起支持区域截图自动捕获，无需拖入侧栏。
+0.8.0 优先检测并复用本机兼容 Node.js，只下载服务和依赖；不可用时自动回退到专用运行环境。仍支持一键连接 Codex，普通用户无需源码或终端。Zotero 原生设置页：在「设置 → Zotero MCP」查看连接状态、控制自动捕获、复制连接配置和运行脱敏诊断。0.5.1 起支持区域截图自动捕获，无需拖入侧栏。
 
 ## 可以做什么
 
@@ -54,7 +54,7 @@
 2. 打开「设置 → Zotero MCP」，插件会自动下载并检查运行组件。准备好后点击「连接 Codex」。
 3. 重启 Codex，保持 Zotero 打开，发送“检查 Zotero 连接状态”。
 
-不需要单独安装 Node.js、下载源码、运行 npm 或填写路径。运行包包含 Node、编译后的 MCP 服务、PDF 原生依赖；存放于 Zotero profile 的 `zotero-codex-runtime` 中。首次下载需要网络，之后直接复用。Codex 按 stdio 配置自动启动服务，不需要终端常驻。
+不需要单独安装 Node.js、下载源码、运行 npm 或填写路径。本机 Node 验证通过时只下载服务包，否则自动准备包含 Node 的完整运行包；组件包含编译后的 MCP 服务和 PDF 原生依赖，存放于 Zotero profile 的 `zotero-codex-runtime` 中。首次下载需要网络，之后直接复用。Codex 按 stdio 配置自动启动服务，不需要终端常驻。
 
 连接按钮会开启 Zotero 本地 API，并备份、更新 Codex 用户配置中的 `zotero` 连接；其他模型、MCP 和工具权限保留。此前手动配置过本项目的用户也可点击该按钮迁移。下载或校验失败不会替换可用的旧运行包，设置里可以重试或关闭自动准备。升级后已托管的 Codex 连接会指向经过验证的新版本，需要重启 Codex 生效。
 

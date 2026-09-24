@@ -1,0 +1,17 @@
+{
+  "version": "0.8.0",
+  "checks": [
+    {
+      "name": "reused-node-starts-43-tools",
+      "pass": true
+    },
+    {
+      "name": "reused-node-connects-to-plugin",
+      "pass": true
+    },
+    {
+      "name": "reused-node-reads-live-context",
+      "pass": true
+    }
+  ]
+}

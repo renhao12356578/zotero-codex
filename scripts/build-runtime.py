@@ -24,7 +24,8 @@ with tempfile.TemporaryDirectory(prefix='zotero-runtime-build-') as temporary:
     for name in ['package.json', 'LICENSE', 'UPSTREAM.json']:
         shutil.copy2(root / 'vendor/zotero-native-mcp' / name, stage / 'vendor/zotero-native-mcp' / name)
     (stage / 'addon/content').mkdir(parents=True)
-    shutil.copy2(root / 'addon/content/mcp-schema.js', stage / 'addon/content/mcp-schema.js')
+    for name in ['mcp-schema.js','runtime-core.js']:
+        shutil.copy2(root / 'addon/content' / name, stage / 'addon/content' / name)
     binary = stage / ('node.exe' if os.name == 'nt' else 'node')
     shutil.copy2(node['path'], binary)
     # Include Node and its bundled third-party license text, not just our dependencies.
@@ -34,16 +35,21 @@ with tempfile.TemporaryDirectory(prefix='zotero-runtime-build-') as temporary:
         (stage / 'NODE-LICENSE').write_bytes(response.read())
     (stage / 'runtime.json').write_text(json.dumps({'schema':1,'version':version,'platform':key,'node':node['version']}))
     subprocess.run([str(binary), str(stage / 'runtime/verify.mjs')], check=True)
-    name = f'zotero-codex-runtime-{version}-{key}.zip'
-    target = dist / name
-    with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        for source in sorted(stage.rglob('*')):
-            if source.is_file() and not source.is_symlink() and '.bin' not in source.parts:
-                archive.write(source, source.relative_to(stage).as_posix())
-    digest = hashlib.sha256()
-    with target.open('rb') as stream:
-        for chunk in iter(lambda: stream.read(1024*1024), b''):
-            digest.update(chunk)
-    descriptor = {'name':name,'size':target.stat().st_size,'sha256':digest.hexdigest()}
-    (dist / f'runtime-{key}.json').write_text(json.dumps({'schema':1,'version':version,'assets':{key:descriptor}},indent=2)+'\n')
-    print(json.dumps(descriptor))
+    manifest = {'schema':1,'version':version,'assets':{},'services':{}}
+    for kind in ['runtime', 'service']:
+        name = f'zotero-codex-{kind}-{version}-{key}.zip'
+        target = dist / name
+        with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+            for source in sorted(stage.rglob('*')):
+                if kind == 'service' and source in [binary,stage / 'NODE-LICENSE']:
+                    continue
+                if source.is_file() and not source.is_symlink() and '.bin' not in source.parts:
+                    archive.write(source, source.relative_to(stage).as_posix())
+        digest = hashlib.sha256()
+        with target.open('rb') as stream:
+            for chunk in iter(lambda: stream.read(1024*1024), b''):
+                digest.update(chunk)
+        descriptor = {'name':name,'size':target.stat().st_size,'sha256':digest.hexdigest()}
+        manifest['assets' if kind == 'runtime' else 'services'][key] = descriptor
+        print(json.dumps(descriptor))
+    (dist / f'runtime-{key}.json').write_text(json.dumps(manifest,indent=2)+'\n')

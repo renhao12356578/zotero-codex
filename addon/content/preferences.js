@@ -25,6 +25,9 @@ var ZoteroMCPPreferences = {
     for (const id of ['node-path','server-path']) this.el(id).addEventListener('change', () => {
       try { this.savePaths(); this.feedback('路径已保存在本机'); } catch (error) { this.feedback(error.message); }
     });
+    this.el('prefer-system').addEventListener('change', () => {
+      this.api.runtime.setPreferSystem(this.el('prefer-system').checked); this.refreshRuntime();
+    });
     this.el('auto-install').addEventListener('change', () => {
       this.api.runtime.setAutomatic(this.el('auto-install').checked); this.refresh();
     });
@@ -60,6 +63,8 @@ var ZoteroMCPPreferences = {
       // Avoid repeatedly announcing an unchanged status to screen readers.
       if (this.el('runtime-status').textContent !== state.message) this.el('runtime-status').textContent = state.message;
       this.el('auto-install').checked = state.automatic;
+      this.el('prefer-system').checked = state.preferSystem;
+      this.el('node-source').textContent = state.nodeLabel || '正在检查可用的 Node.js…';
     } catch { /* Pane can outlive a disabled plugin. */ }
   },
   savePaths() { this.api.saveConnectionSettings(this.el('node-path').value, this.el('server-path').value); },

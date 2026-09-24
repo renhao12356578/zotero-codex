@@ -17,4 +17,4 @@ The Zotero XPI's Reader and Better Notes integration uses host APIs; it does not
 
 ## Managed runtime packages
 
-Platform-specific runtime ZIPs bundle an unmodified Node.js executable. The matching Node.js license and bundled third-party notices are included as `NODE-LICENSE`. Production npm dependencies, including `toml-eslint-parser` (MIT), retain their package license files. The vendored Zotero native MCP license is also included in every runtime ZIP. No Zotero or Better Notes executable is redistributed.
+Full platform-specific runtime ZIPs bundle an unmodified Node.js executable. Service-only ZIPs omit Node.js and its NODE-LICENSE file and use an independently installed compatible Node runtime. The matching Node.js license and bundled third-party notices are included as `NODE-LICENSE`. Production npm dependencies, including `toml-eslint-parser` (MIT), retain their package license files. The vendored Zotero native MCP license is also included in every runtime ZIP. No Zotero or Better Notes executable is redistributed.

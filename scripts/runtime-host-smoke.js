@@ -1,6 +1,6 @@
 // Real Gecko extraction/process/configuration tests in an isolated Zotero profile.
 (async () => {
-  const result={version:'0.7.0',checks:[]};
+  const result={version:'0.8.0',checks:[]};
   const check=(name,pass)=>{result.checks.push({name,pass:Boolean(pass)});if(!pass)throw new Error(name);};
   const waitFor=async fn=>{for(let i=0;i<900;i++){if(await fn())return;await Zotero.Promise.delay(100);}throw new Error('wait timed out');};
   const request=Zotero.HTTP.request,download=Zotero.HTTP.download;
@@ -12,21 +12,23 @@
     await IOUtils.makeDirectory(PathUtils.parent(configPath),{createAncestors:true});
     await IOUtils.writeUTF8(configPath,'# fixture comment\nmodel="preserve-model"\n[mcp_servers.other]\ncommand="preserve-command"\n');
     const part=JSON.parse(await IOUtils.readUTF8(PathUtils.join(base,'runtime-manifest.json')));
-    const key=Object.keys(part.assets)[0],asset=part.assets[key];
+    const key=Object.keys(part.assets)[0],assets=[part.assets[key],part.services[key]];
     Zotero.HTTP.request=async function(method,url,options){
-      if(url.endsWith('/v0.7.0/runtime-manifest.json')){
-        const manifest=JSON.parse(JSON.stringify(part));if(badHash)manifest.assets[key].sha256='0'.repeat(64);
+      if(url.endsWith('/v0.8.0/runtime-manifest.json')){
+        const manifest=JSON.parse(JSON.stringify(part));if(badHash)for(const group of ['assets','services'])manifest[group][key].sha256='0'.repeat(64);
         return {status:200,response:manifest};
       }
       return request.call(this,method,url,options);
     };
     Zotero.HTTP.download=async function(url,path,options){
-      if(url.endsWith('/'+asset.name)){
+      const asset=assets.find(a=>url.endsWith('/'+a.name));
+      if(asset){
         downloads++;await IOUtils.copy(PathUtils.join(base,asset.name),path);options.onProgress(asset.size,asset.size);return {status:200};
       }
       return download.call(this,url,path,options);
     };
     const api=Zotero.ZoteroCodex.settings;
+    Zotero.Prefs.set('extensions.zotero-codex.preferSystemNode',false,true);
     await api.runtime.ensure().catch(()=>{});
     check('checksum-mismatch-rejected-without-configuration',api.runtime.state().phase==='error'&&!api.runtime.state().ready&&!(await IOUtils.readUTF8(configPath)).includes('mcp_servers.zotero'));
     badHash=false;

@@ -1,0 +1,61 @@
+{
+  "version": "0.8.0",
+  "checks": [
+    {
+      "name": "system-node-selected-and-verified",
+      "pass": true
+    },
+    {
+      "name": "only-service-package-downloaded",
+      "pass": true
+    },
+    {
+      "name": "service-package-does-not-contain-node",
+      "pass": true
+    },
+    {
+      "name": "service-package-is-smaller",
+      "pass": true
+    },
+    {
+      "name": "codex-config-uses-detected-node",
+      "pass": true
+    },
+    {
+      "name": "healthy-install-needs-no-network",
+      "pass": true
+    },
+    {
+      "name": "failed-system-runtime-falls-back-to-full-package",
+      "pass": true
+    },
+    {
+      "name": "fallback-updates-owned-codex-config",
+      "pass": true
+    },
+    {
+      "name": "healthy-system-node-can-be-reused-again",
+      "pass": true
+    },
+    {
+      "name": "bundled-node-remains-available-for-fallback",
+      "pass": true
+    },
+    {
+      "name": "manual-bundled-mode-reuses-existing-node-offline",
+      "pass": true
+    },
+    {
+      "name": "external-node-is-never-modified",
+      "pass": true
+    },
+    {
+      "name": "zotero-bridge-and-api-remain-ready",
+      "pass": true
+    },
+    {
+      "name": "settings-show-verified-node-source",
+      "pass": true
+    }
+  ]
+}

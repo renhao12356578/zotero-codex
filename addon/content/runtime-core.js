@@ -13,9 +13,27 @@ var ZoteroMCPRuntimeCore = (() => {
     if (!/^\d+\.\d+\.\d+$/.test(version) || !/^[a-zA-Z0-9._-]+$/.test(name)) throw new Error('无效的运行包版本或文件名');
     return `${repository}/releases/download/v${version}/${name}`;
   }
-  function asset(manifest, version, key) {
-    const value = manifest?.assets?.[key];
-    const name = `zotero-codex-runtime-${version}-${key}.zip`;
+  function compatibleNode(version) {
+    const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+    return Boolean(match && (Number(match[1]) >= 24 || Number(match[1]) === 22 && Number(match[2]) >= 13));
+  }
+  function candidates(os, env, home, join) {
+    const windows = os === 'WINNT', binary = windows ? 'node.exe' : 'node';
+    const absolute = p => typeof p === 'string' && (windows ? /^(?:[a-z]:[\\/]|\\\\)/i.test(p) : p.startsWith('/'));
+    const safeJoin = (p,...parts) => absolute(p) ? join(p,...parts) : null;
+    const paths = (env.PATH || '').split(windows ? ';' : ':').map(p=>p.replace(/^"|"$/g,'')).filter(absolute).map(p=>join(p,binary));
+    if (windows) {
+      for (const p of [env.ProgramW6432,env.ProgramFiles,env['ProgramFiles(x86)']]) if(p) paths.push(safeJoin(p,'nodejs',binary));
+      if(env.LOCALAPPDATA) paths.push(safeJoin(env.LOCALAPPDATA,'Programs','nodejs',binary));
+      for(const p of [env.NVM_SYMLINK,env.NVM_HOME]) if(p) paths.push(safeJoin(p,binary));
+    } else paths.push('/opt/homebrew/bin/node','/usr/local/bin/node','/usr/bin/node');
+    paths.push(safeJoin(env.VOLTA_HOME || join(home,'.volta'),'bin',binary));
+    if(env.FNM_MULTISHELL_PATH) paths.push(safeJoin(env.FNM_MULTISHELL_PATH,windows ? binary : 'bin',...(windows ? [] : [binary])));
+    return [...new Set(paths.filter(Boolean))];
+  }
+  function asset(manifest, version, key, kind = 'full') {
+    const value = manifest?.[kind === 'service' ? 'services' : 'assets']?.[key];
+    const name = `zotero-codex-${kind === 'service' ? 'service' : 'runtime'}-${version}-${key}.zip`;
     if (manifest?.schema !== 1 || manifest.version !== version || !supported.includes(key) || value?.name !== name ||
         !/^[a-f0-9]{64}$/.test(value.sha256) || !Number.isSafeInteger(value.size) || value.size <= 0 || value.size > 350 * 1024 * 1024) {
       throw new Error('运行包清单不完整或版本不匹配，请稍后重试。');
@@ -30,6 +48,6 @@ var ZoteroMCPRuntimeCore = (() => {
     }
     return parts;
   }
-  return {repository, supported, platform, releaseURL, asset, entry};
+  return {repository, supported, platform, compatibleNode, candidates, releaseURL, asset, entry};
 })();
 if (typeof module !== 'undefined') module.exports = ZoteroMCPRuntimeCore;
