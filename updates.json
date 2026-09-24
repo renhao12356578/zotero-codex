@@ -3,6 +3,17 @@
     "zotero-codex@local": {
       "updates": [
         {
+          "version": "0.7.0",
+          "update_link": "https://github.com/renhao12356578/zotero-codex/releases/download/v0.7.0/zotero-codex-0.7.0.xpi",
+          "update_hash": "sha256:c0bda466c6c9e48a9b8ce9ea649620d62bdcd5a75b33084b08430c77561b2d67",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "10.0",
+              "strict_max_version": "10.*"
+            }
+          }
+        },
+        {
           "version": "0.6.1",
           "update_link": "https://github.com/renhao12356578/zotero-codex/releases/download/v0.6.1/zotero-codex-0.6.1.xpi",
           "update_hash": "sha256:3717d6d1f4316c1597a1d724bafb1b474a2a75b98e9c9242398608eab61cc3f3",

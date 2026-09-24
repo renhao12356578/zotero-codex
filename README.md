@@ -108,6 +108,8 @@ edit_note(note, revision, requestID,
 
 ## 验证
 
+0.7.0 安装流程：49 项单元测试在五个平台通过；真实 Zotero 完成 11 项安装/修复检查、3 项托管服务 stdio 检查。本机从公开 Release 自动下载、连接并读取文库的 5 项只读检查通过。见 [自动安装验证报告](docs/runtime-installation-report.md)。
+
 2026-09-22 在 macOS arm64、Zotero 10.0.3、Better Notes 3.3.3 上完成全流程回归。43/43 个工具均经过真实 MCP SDK stdio 调用；118 项宿主/端到端检查及 4 项退出后持久化与安装包检查通过。完整结果与复现步骤见 [全流程测试报告](docs/fullflow-test-report.md)。
 
 - `npm test`：32 项本项目测试通过。

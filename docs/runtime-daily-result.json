@@ -1,0 +1,25 @@
+{
+  "version": "0.7.0",
+  "checks": [
+    {
+      "name": "codex-uses-managed-runtime",
+      "pass": true
+    },
+    {
+      "name": "other-codex-settings-preserved",
+      "pass": true
+    },
+    {
+      "name": "managed-runtime-tools",
+      "pass": true
+    },
+    {
+      "name": "managed-runtime-and-plugin-0.7.0",
+      "pass": true
+    },
+    {
+      "name": "live-reader-context",
+      "pass": true
+    }
+  ]
+}
