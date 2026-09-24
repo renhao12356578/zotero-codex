@@ -157,14 +157,19 @@ var ZoteroMCPRuntime = (() => {
     return task;
   }
   async function connect() {
-    const directory = status.ready ? status.directory : await ensure();
-    const result = await configure(directory,'connect');
-    active();
-    if (!result.configured) throw new Error('Codex 配置未完成');
-    Zotero.Prefs.set('httpServer.localAPI.enabled',true);
-    Zotero.Prefs.set(pref+'nodePath',nodePath(directory),true);
-    Zotero.Prefs.set(pref+'serverPath',PathUtils.join(directory,'mcp','server.mjs'),true);
-    notify({configured:true,message:'已连接 Codex，并开启 Zotero 本地 API。请重启 Codex 后使用。'});
+    try {
+      const directory = status.ready ? status.directory : await ensure();
+      const result = await configure(directory,'connect');
+      active();
+      if (!result.configured) throw new Error('Codex 配置未完成');
+      Zotero.Prefs.set('httpServer.localAPI.enabled',true);
+      Zotero.Prefs.set(pref+'nodePath',nodePath(directory),true);
+      Zotero.Prefs.set(pref+'serverPath',PathUtils.join(directory,'mcp','server.mjs'),true);
+      notify({configured:true,message:'已连接 Codex，并开启 Zotero 本地 API。请重启 Codex 后使用。'});
+    } catch(error) {
+      if (!disposed) notify({message:error.message});
+      throw error;
+    }
   }
   function start(options) {
     version=options.version;connection=options.connection;disposed=false;
