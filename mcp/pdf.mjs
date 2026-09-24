@@ -1,10 +1,12 @@
 import { readFile, stat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { dirname, join, sep } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createCanvas } from '@napi-rs/canvas';
 
 const require = createRequire(import.meta.url);
 const pdfRoot = dirname(require.resolve('pdfjs-dist/package.json'));
+// PDF.js checks for a literal '/' even when its Node factory reads Windows paths.
+const resourceDirectory = name => join(pdfRoot, name).replaceAll('\\', '/') + '/';
 let parser;
 export async function readPDF(path, { startPage = 1, pageCount = 3, includeImage = false } = {}) {
   if (!Number.isInteger(startPage) || startPage < 1 || !Number.isInteger(pageCount) || pageCount < 1 || pageCount > 5) throw new Error('Invalid PDF page range');
@@ -15,9 +17,9 @@ export async function readPDF(path, { startPage = 1, pageCount = 3, includeImage
   const { getDocument, VerbosityLevel } = await parser;
   const task = getDocument({ data: new Uint8Array(await readFile(path)), verbosity: VerbosityLevel.ERRORS,
     isEvalSupported: false, useSystemFonts: false,
-    standardFontDataUrl: join(pdfRoot, 'standard_fonts') + sep,
-    cMapUrl: join(pdfRoot, 'cmaps') + sep, cMapPacked: true,
-    wasmUrl: join(pdfRoot, 'wasm') + sep,
+    standardFontDataUrl: resourceDirectory('standard_fonts'),
+    cMapUrl: resourceDirectory('cmaps'), cMapPacked: true,
+    wasmUrl: resourceDirectory('wasm'),
   });
   try {
     const doc = await task.promise;

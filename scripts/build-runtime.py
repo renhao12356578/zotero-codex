@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory(prefix='zotero-runtime-build-') as temporary:
         shutil.copy2(root / name, stage / name)
     # Install only production dependencies and the current platform's native canvas.
     npm = 'npm.cmd' if os.name == 'nt' else 'npm'
-    subprocess.run([npm, 'ci', '--omit=dev', '--ignore-scripts', '--prefix', str(stage)], check=True, shell=os.name == 'nt')
+    subprocess.run([npm, 'ci', '--omit=dev', '--ignore-scripts'], cwd=stage, check=True, shell=os.name == 'nt')
     for name in ['mcp', 'runtime', 'vendor/zotero-native-mcp/build']:
         shutil.copytree(root / name, stage / name)
     (stage / 'vendor/zotero-native-mcp').mkdir(exist_ok=True)

@@ -4,6 +4,7 @@ import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createNativeBridge } from '../mcp/native.mjs';
 import { readPDF, readZoteroPDF } from '../mcp/pdf.mjs';
 import { startMockZotero } from '../vendor/zotero-native-mcp/test-utils/mock-zotero.mjs';
@@ -41,7 +42,7 @@ test('PDF.js reads real PDF pages and emits a PNG with bounded dimensions', asyn
  await assert.rejects(readPDF(path,{startPage:30,pageCount:1}),/超出范围/);
 });
 test('PDF reading uses upstream resolved attachment identity and rejects ambiguity', async()=>{
- const path=new URL('./fixtures/alice.pdf',import.meta.url).pathname;
+ const path=fileURLToPath(new URL('./fixtures/alice.pdf',import.meta.url));
  let count=1;
  const native={call:async(name,args)=>{
   assert.equal(name,'zotero_get_attachment_path');assert.equal(args.itemKey,'ABCD1234');

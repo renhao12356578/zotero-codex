@@ -1,0 +1,5 @@
+* text=auto eol=lf
+# Preserve the exact upstream bytes used by provenance SHA256 checks.
+vendor/zotero-native-mcp/** -text
+*.pdf binary
+*.png binary

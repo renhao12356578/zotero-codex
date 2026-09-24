@@ -1,0 +1,17 @@
+{
+  "version": "0.7.0",
+  "checks": [
+    {
+      "name": "installed-runtime-starts-with-43-tools",
+      "pass": true
+    },
+    {
+      "name": "installed-runtime-connects-to-real-host",
+      "pass": true
+    },
+    {
+      "name": "installed-runtime-reads-live-context",
+      "pass": true
+    }
+  ]
+}
