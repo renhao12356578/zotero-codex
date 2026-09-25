@@ -59,13 +59,11 @@ var ZoteroCodex = (() => {
       serverPath: Zotero.Prefs.get(PREF + 'serverPath', true) || clientRuntime?.serverPath || '',
     };
   }
-  function saveConnectionSettings(nodePath, serverPath) {
+  async function connectionConfig(customPaths) {
+    const paths = customPaths || settingsState();
+    let {nodePath, serverPath} = paths;
     for (const value of [nodePath, serverPath]) if (typeof value !== 'string' || value.length > 4096 || /[\r\n\0]/.test(value)) throw new Error('路径无效');
-    Zotero.Prefs.set(PREF + 'nodePath', nodePath.trim(), true);
-    Zotero.Prefs.set(PREF + 'serverPath', serverPath.trim(), true);
-  }
-  async function connectionConfig() {
-    const {nodePath, serverPath} = settingsState();
+    nodePath = nodePath.trim(); serverPath = serverPath.trim();
     if (!serverPath || !PathUtils.isAbsolute(serverPath) || !(await IOUtils.exists(serverPath))) throw new Error('请填写已安装的 mcp/server.mjs 的完整路径');
     if ((await IOUtils.stat(serverPath)).type !== 'regular') throw new Error('MCP 服务路径必须是文件');
     if (nodePath !== 'node' && (!PathUtils.isAbsolute(nodePath) || !(await IOUtils.exists(nodePath)))) throw new Error('请填写 Node.js 可执行文件的完整路径，或使用 node');
@@ -497,7 +495,7 @@ var ZoteroCodex = (() => {
   async function execute(name, args) {
     ZoteroMCPContract.validateCall(name, args);
     switch (name) {
-      case 'zotero_status': return { version: '0.8.0', zoteroVersion: Zotero.version, betterNotes: Boolean(Zotero.BetterNotes?.api), connected: running };
+      case 'zotero_status': return { version: '0.8.1', zoteroVersion: Zotero.version, betterNotes: Boolean(Zotero.BetterNotes?.api), connected: running };
       case 'zotero_get_context': return context();
       case 'zotero_resolve_item': {
         const libraryID = args.groupId ? Zotero.Groups.getLibraryIDFromGroupID(args.groupId) : Zotero.Libraries.userLibraryID;
@@ -569,7 +567,7 @@ var ZoteroCodex = (() => {
     const make = (tag, text) => { const n = doc.createElementNS('http://www.w3.org/1999/xhtml', tag); n.textContent = text; return n; };
     const panel = make('div', ''); panel.className = 'zc-mcp';
     panel.style.cssText = 'padding:12px;display:grid;gap:10px;font:inherit;line-height:1.6';
-    panel.append(make('strong', 'MCP 已就绪 · 0.8.0'), make('div', '在 Codex 中直接提问。可在设置中管理文字选区和区域截图的自动捕获。'));
+    panel.append(make('strong', 'MCP 已就绪 · 0.8.1'), make('div', '在 Codex 中直接提问。可在设置中管理文字选区和区域截图的自动捕获。'));
     const settingsButton = make('button', '打开 MCP 设置');
     settingsButton.addEventListener('click', () => Zotero.Utilities.Internal.openPreferences(SETTINGS_ID));
     panel.append(settingsButton);
@@ -621,7 +619,7 @@ var ZoteroCodex = (() => {
     // Create privately before writing any secret; never log the token.
     await IOUtils.writeUTF8(connectionPath, '{}', { mode: 'overwrite', permissions: 0o600 });
     await IOUtils.setPermissions(connectionPath, 0o600);
-    await IOUtils.writeUTF8(connectionPath, JSON.stringify({ url: `http://127.0.0.1:${Zotero.Server.port}${ENDPOINT}`, token, version: '0.8.0' }));
+    await IOUtils.writeUTF8(connectionPath, JSON.stringify({ url: `http://127.0.0.1:${Zotero.Server.port}${ENDPOINT}`, token, version: '0.8.1' }));
     for (const win of Zotero.getMainWindows()) prepareWindow(win);
     paneID = Zotero.ItemPaneManager.registerSection({ paneID: 'zotero-codex-mcp', pluginID: ID,
       header: { l10nID: 'zotero-codex-title', icon: 'chrome://zotero-codex/content/icon.svg', darkIcon: 'chrome://zotero-codex/content/icon-dark.svg' },
@@ -643,8 +641,8 @@ var ZoteroCodex = (() => {
     Zotero.Reader.registerEventListener('renderTextSelectionPopup', listener, ID);
     running = true;
     annotationObserverID = Zotero.Notifier.registerObserver({notify:onAnnotationChange}, ['item'], 'zotero-codex-regions');
-    Zotero.ZoteroCodex = { version: '0.8.0', dispatch, capture, annotationCard,
-      settings: {state:settingsState, setCapturePreference, clearContext, saveConnectionSettings, connectionConfig, revealConnection, diagnose, runtime:ZoteroMCPRuntime} };
+    Zotero.ZoteroCodex = { version: '0.8.1', dispatch, capture, annotationCard,
+      settings: {state:settingsState, setCapturePreference, clearContext, connectionConfig, revealConnection, diagnose, runtime:ZoteroMCPRuntime} };
     preferencePaneID = await Zotero.PreferencePanes.register({
       pluginID:ID, id:SETTINGS_ID, label:'Zotero MCP',
       src:'chrome://zotero-codex/content/preferences.xhtml',

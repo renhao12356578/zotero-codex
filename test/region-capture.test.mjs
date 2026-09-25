@@ -102,5 +102,11 @@ test('settings distinguish authenticated client activity, redact diagnostics and
  assert.equal(settings.state().lastRequestAt,at);
  const encoded=JSON.stringify(report);assert.ok(!encoded.includes('/private'));assert.ok(!encoded.includes('token'));
  assert.ok(!encoded.includes(JSON.parse(f.files.get('/private/profile/connection.json')).token));
- settings.saveConnectionSettings('node','/missing/server.mjs');await assert.rejects(settings.connectionConfig(),/完整路径/);
+ await assert.rejects(settings.connectionConfig({nodePath:'node',serverPath:'/missing/server.mjs'}),/完整路径/);
+ const originalPrefs=[...f.prefs];
+ f.files.set('/custom/server.mjs','// custom service');
+ const custom=JSON.parse(await settings.connectionConfig({nodePath:'node',serverPath:'/custom/server.mjs'}));
+ assert.equal(custom.mcpServers.zotero.args[0],'/custom/server.mjs');
+ assert.deepEqual([...f.prefs],originalPrefs,'exporting custom paths does not change managed preferences');
+ assert.equal(JSON.parse(await settings.connectionConfig()).mcpServers.zotero.args[0],client.serverPath);
 });

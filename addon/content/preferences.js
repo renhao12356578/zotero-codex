@@ -9,7 +9,10 @@ var ZoteroMCPPreferences = {
   bind(id, action) {
     this.el(id).addEventListener('click', async () => {
       const button = this.el(id); button.disabled = true;
-      try { await action(); } catch (error) { this.feedback(error.message); }
+      try { await action(); } catch (error) {
+        if (id === 'copy-config') this.el('config-feedback').textContent = error.message;
+        else this.feedback(error.message);
+      }
       finally { button.disabled = false; }
     });
   },
@@ -22,8 +25,13 @@ var ZoteroMCPPreferences = {
         catch (error) { this.feedback(error.message); }
       });
     }
-    for (const id of ['node-path','server-path']) this.el(id).addEventListener('change', () => {
-      try { this.savePaths(); this.feedback('路径已保存在本机'); } catch (error) { this.feedback(error.message); }
+    this.el('developer-mode').checked = false;
+    this.el('developer-mode').addEventListener('change', () => {
+      const custom = this.el('developer-mode').checked;
+      this.el('developer-fields').hidden = !custom;
+      this.el('copy-config').textContent = custom ? '复制自定义 MCP 配置' : '复制 MCP 配置';
+      this.el('config-feedback').textContent = '';
+      this.refresh(true);
     });
     this.el('prefer-system').addEventListener('change', () => {
       this.api.runtime.setPreferSystem(this.el('prefer-system').checked); this.refreshRuntime();
@@ -40,9 +48,10 @@ var ZoteroMCPPreferences = {
     this.bind('refresh', () => { this.refresh(); this.feedback('状态已刷新'); });
     this.bind('clear', () => { this.api.clearContext(); this.refresh(); this.feedback('已清除所有阅读器的 MCP 选区快照'); });
     this.bind('copy-config', async () => {
-      this.savePaths();
-      Zotero.Utilities.Internal.copyTextToClipboard(await this.api.connectionConfig());
-      this.feedback('MCP 配置已复制，不包含访问令牌');
+      const custom = this.el('developer-mode').checked;
+      const paths = custom ? {nodePath:this.el('node-path').value,serverPath:this.el('server-path').value} : undefined;
+      Zotero.Utilities.Internal.copyTextToClipboard(await this.api.connectionConfig(paths));
+      this.el('config-feedback').textContent = custom ? '自定义配置已复制；请在目标客户端添加，现有连接未修改。' : 'MCP 配置已复制；请在目标客户端添加，不包含访问令牌。';
     });
     this.bind('reveal', () => this.api.revealConnection());
     this.bind('check', () => this.check());
@@ -65,9 +74,13 @@ var ZoteroMCPPreferences = {
       this.el('auto-install').checked = state.automatic;
       this.el('prefer-system').checked = state.preferSystem;
       this.el('node-source').textContent = state.nodeLabel || '正在检查可用的 Node.js…';
+      this.el('runtime-label').textContent = state.nodeLabel || '尚未就绪';
+      this.el('runtime-version').textContent = state.ready ? this.api.state().version : '尚未就绪';
+      const paths = this.api.state();
+      this.el('node-detail').textContent = paths.nodePath || '尚未确定';
+      this.el('server-detail').textContent = paths.serverPath || '尚未准备，请点击「准备 / 重试」';
     } catch { /* Pane can outlive a disabled plugin. */ }
   },
-  savePaths() { this.api.saveConnectionSettings(this.el('node-path').value, this.el('server-path').value); },
   refresh(fillPaths = false) {
     if (!this.initialized) return;
     this.refreshRuntime();
@@ -85,12 +98,9 @@ var ZoteroMCPPreferences = {
       for (const [id, text] of Object.entries(values)) this.el(id).textContent = text;
       this.el('auto-text').checked = state.autoText;
       this.el('auto-region').checked = state.autoRegion;
-      if (fillPaths) {
+      if (fillPaths || !this.el('developer-mode').checked) {
         this.el('node-path').value = state.nodePath;
         this.el('server-path').value = state.serverPath;
-      } else if (!this.el('server-path').value && document.activeElement !== this.el('server-path')) {
-        this.el('server-path').value = state.serverPath;
-        if (this.el('node-path').value === 'node' && document.activeElement !== this.el('node-path')) this.el('node-path').value = state.nodePath;
       }
     } catch (error) { this.feedback(error.message); }
   },

@@ -40,21 +40,37 @@
     <html:p class="zc-muted">清除所有阅读器的 MCP 选区快照；已保存的批注和笔记不受影响。</html:p>
   </groupbox>
   <groupbox class="zc-group">
-    <label><html:h2>高级连接配置</html:h2></label>
-    <html:details><html:summary>手动部署与其他客户端</html:summary>
-    <html:p class="zc-muted">使用上方「连接 Codex」无需填写以下内容。其他客户端或自行部署服务时，可在这里指定路径。</html:p>
-    <html:label class="zc-field" for="zc-node-path">Node.js 可执行文件</html:label>
-    <html:input class="zc-path" id="zc-node-path" type="text" placeholder="node 或 Node.js 的完整路径" spellcheck="false"/>
-    <html:label class="zc-field" for="zc-server-path">MCP 服务脚本</html:label>
-    <html:input class="zc-path" id="zc-server-path" type="text" placeholder="已安装的 mcp/server.mjs 的完整路径" spellcheck="false"/>
-    <html:p class="zc-muted">复制的配置用于支持 mcpServers 的客户端。此处修改不会自动更改 Codex 中已有的连接配置。</html:p>
+    <label><html:h2>高级设置</html:h2></label>
+    <html:p class="zc-muted">用于连接其他 AI 客户端、查看连接路径或调试自己的 MCP 服务。日常使用只需上方「连接 Codex」，无需在这里修改路径。</html:p>
+    <html:details id="zc-connection-details"><html:summary>查看连接详情</html:summary>
+      <html:p class="zc-muted">以下是插件当前使用的自动配置，供查看和排查问题。</html:p>
+      <html:dl class="zc-status">
+        <html:dt>Node.js 运行环境</html:dt><html:dd id="zc-runtime-label"/>
+        <html:dt>服务组件版本</html:dt><html:dd id="zc-runtime-version"/>
+        <html:dt>Node.js 路径</html:dt><html:dd id="zc-node-detail" class="zc-path-detail"/>
+        <html:dt>MCP 服务脚本</html:dt><html:dd id="zc-server-detail" class="zc-path-detail"/>
+      </html:dl>
+      <html:p class="zc-muted">Node.js 负责运行服务脚本；服务负责连接 Zotero、读取论文和协作笔记。路径由插件自动管理，不需要手动启动这些文件。</html:p>
+    </html:details>
+    <html:label class="zc-toggle"><html:input id="zc-developer-mode" type="checkbox" aria-describedby="zc-developer-description"/>开发者模式：自定义导出路径</html:label>
+    <html:p id="zc-developer-description" class="zc-muted">仅在调试自己的服务或使用自定义安装目录时开启。连接其他客户端通常不需要开启。</html:p>
+    <html:div id="zc-developer-fields" hidden="hidden">
+      <html:p class="zc-muted">下方路径仅用于本次复制的配置，不会修改自动安装的组件或 Codex 已有连接。关闭开发者模式或重新打开设置后，恢复使用自动路径。</html:p>
+      <html:label class="zc-field" for="zc-node-path">自定义 Node.js 可执行文件</html:label>
+      <html:input class="zc-path" id="zc-node-path" type="text" placeholder="Node.js 的完整路径" spellcheck="false" aria-describedby="zc-node-help"/>
+      <html:p id="zc-node-help" class="zc-muted">指定运行服务的 Node.js；也可填写 node，但目标客户端必须能在自己的 PATH 中找到它。</html:p>
+      <html:label class="zc-field" for="zc-server-path">自定义 MCP 服务脚本</html:label>
+      <html:input class="zc-path" id="zc-server-path" type="text" placeholder="mcp/server.mjs 的完整路径" spellcheck="false" aria-describedby="zc-server-help"/>
+      <html:p id="zc-server-help" class="zc-muted">填写与本插件兼容的服务脚本完整路径。复制时检查文件是否存在，不会运行或验证自定义服务。</html:p>
+    </html:div>
     <hbox class="zc-actions" align="center">
       <html:button id="zc-copy-config" type="button">复制 MCP 配置</html:button>
       <html:button id="zc-reveal" type="button">打开连接文件所在目录</html:button>
       <html:button id="zc-help" type="button">安装说明</html:button>
     </hbox>
-    <html:p class="zc-muted">连接文件含本机访问令牌，请勿公开分享。</html:p>
-    </html:details>
+    <html:p id="zc-config-feedback" class="zc-muted" role="status" aria-live="polite"/>
+    <html:p class="zc-muted">复制后，在目标客户端添加配置并重新加载 MCP。配置采用 mcpServers JSON 格式，是否支持请以该客户端为准；仅复制不会建立连接。</html:p>
+    <html:p class="zc-muted">连接文件记录本机桥接地址和访问令牌；打开目录用于排查问题，无需手动编辑。请勿公开分享或移动该文件。复制的配置不含令牌，但包含本机路径，不适合直接用于另一台电脑。</html:p>
   </groupbox>
   <groupbox class="zc-group">
     <label><html:h2>诊断与关于</html:h2></label>

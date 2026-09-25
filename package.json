@@ -1,6 +1,6 @@
 {
   "name": "zotero-codex",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "private": true,
   "description": "Zotero reading and Better Notes companion for Codex",
   "engines": {

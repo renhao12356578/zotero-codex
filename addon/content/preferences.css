@@ -51,6 +51,9 @@
 }
 #zc-settings .zc-toggle input { margin: 0 8px 0 0; vertical-align: -1px; }
 #zc-settings .zc-field { display: block; margin: 12px 0 6px; }
+#zc-settings .zc-path-detail { user-select: text; font-size: 0.94em; }
+#zc-settings #zc-developer-fields[hidden] { display: none; }
+#zc-settings #zc-config-feedback:empty { display: none; }
 #zc-settings .zc-path {
   box-sizing: border-box;
   display: block;
