@@ -108,6 +108,8 @@ edit_note(note, revision, requestID,
 
 ## 验证
 
+0.8.1 高级设置：53 项测试及五个平台构建通过；真实 Zotero 设置页通过 19 项检查，覆盖默认只读信息、自定义导出隔离、错误提示和恢复自动路径。见 [高级设置验证报告](docs/advanced-settings-report.md)。
+
 0.8.0 本机 Node 复用：53 项测试在五个平台通过，另通过 Node 22.13.1 兼容性测试；真实 Zotero 完成 14 项宿主检查、3 项 stdio 检查，以及正式 Release 更新后的 8 项日常只读检查。本机成功复用 nvm Node 25.8.1，只下载服务包，保留专用 Node 回退和其他 Codex 设置。见 [本机 Node 复用验证报告](docs/node-reuse-installation-report.md)。
 
 0.7.0 安装流程：49 项单元测试在五个平台通过；真实 Zotero 完成 11 项安装/修复检查、3 项托管服务 stdio 检查。本机从公开 Release 自动下载、连接并读取文库的 5 项只读检查通过。见 [自动安装验证报告](docs/runtime-installation-report.md)。
